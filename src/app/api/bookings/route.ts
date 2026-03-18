@@ -38,10 +38,11 @@ export async function POST(request: NextRequest) {
       { id: docRef.id, ...bookingData },
       { status: 201 }
     );
-  } catch (error) {
-    console.error("Error creating booking:", error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Error creating booking:", message, error);
     return NextResponse.json(
-      { error: "Failed to create booking" },
+      { error: "Failed to create booking", details: message },
       { status: 500 }
     );
   }

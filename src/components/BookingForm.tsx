@@ -31,7 +31,7 @@ export default function BookingForm() {
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || "Something went wrong");
+        throw new Error(err.details || err.error || "Something went wrong");
       }
 
       router.push("/booking-success");
