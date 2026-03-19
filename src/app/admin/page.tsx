@@ -183,7 +183,20 @@ export default function AdminPage() {
                     {booking.guests && booking.guests > 1 && <> &middot; {booking.guests} guests</>}
                   </p>
                   {booking.message && <p className="text-sm text-[var(--text-muted)] truncate">{booking.message}</p>}
-                  <p className="text-xs text-[var(--navy-mid)]">Submitted: {new Date(booking.createdAt).toLocaleString()}</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-xs text-[var(--navy-mid)]">Submitted: {new Date(booking.createdAt).toLocaleString()}</p>
+                    {booking.arrivalStatus && booking.arrivalStatus !== "none" && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gold/15 text-gold">
+                        <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
+                        {booking.arrivalStatus === "left-home" ? "Left Home" : booking.arrivalStatus === "on-the-way" ? "On The Way" : "Arrived"}
+                      </span>
+                    )}
+                    {booking.locationLink && (
+                      <a href={booking.locationLink} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-xs text-blue-400 hover:underline">
+                        View Location
+                      </a>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>

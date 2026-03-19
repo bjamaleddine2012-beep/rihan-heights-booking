@@ -141,11 +141,32 @@ export default function BookingForm() {
               <label htmlFor="time" className="block text-sm font-medium text-[var(--text-muted)] mb-1.5">Time *</label>
               <input type="time" id="time" value={form.time} onChange={(e) => updateField("time", e.target.value)} className={inputClass("time")} />
               {errors.time && <p className="text-red-400 text-xs mt-1">{errors.time}</p>}
+              {/* Quick time suggestions */}
+              <div className="flex gap-1.5 mt-2 flex-wrap">
+                {["09:00", "10:00", "12:00", "14:00", "16:00", "18:00"].map((t) => (
+                  <button key={t} type="button" onClick={() => updateField("time", t)}
+                    className={`px-2 py-0.5 rounded-md text-xs transition-all ${
+                      form.time === t ? "bg-gold/20 text-gold border border-gold/30" : "bg-white/5 text-[var(--text-muted)] hover:bg-white/10 border border-transparent"
+                    }`}>
+                    {t.replace(":00", "") === "09" ? "9 AM" : t.replace(":00", "") === "10" ? "10 AM" : t.replace(":00", "") === "12" ? "12 PM" : t.replace(":00", "") === "14" ? "2 PM" : t.replace(":00", "") === "16" ? "4 PM" : "6 PM"}
+                  </button>
+                ))}
+              </div>
             </div>
             <div>
               <label htmlFor="guests" className="block text-sm font-medium text-[var(--text-muted)] mb-1.5">Guests *</label>
               <input type="number" id="guests" value={form.guests} onChange={(e) => updateField("guests", e.target.value)} min="1" max="20" className={inputClass("guests")} />
               {errors.guests && <p className="text-red-400 text-xs mt-1">{errors.guests}</p>}
+              <div className="flex gap-1.5 mt-2">
+                {["1", "2", "4", "6"].map((g) => (
+                  <button key={g} type="button" onClick={() => updateField("guests", g)}
+                    className={`px-2 py-0.5 rounded-md text-xs transition-all ${
+                      form.guests === g ? "bg-gold/20 text-gold border border-gold/30" : "bg-white/5 text-[var(--text-muted)] hover:bg-white/10 border border-transparent"
+                    }`}>
+                    {g}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 

@@ -9,6 +9,9 @@ export interface Booking {
   guests: number;
   message: string;
   status: "pending" | "approved" | "rejected";
+  arrivalStatus?: "none" | "left-home" | "on-the-way" | "arrived";
+  arrivalUpdatedAt?: string;
+  locationLink?: string;
   createdAt: string;
   statusUpdatedAt?: string;
 }
