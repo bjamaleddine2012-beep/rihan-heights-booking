@@ -1,12 +1,78 @@
 @import "tailwindcss";
 
+:root {
+  --navy: #0f172a;
+  --navy-light: #1e293b;
+  --navy-mid: #334155;
+  --gold: #d4a853;
+  --gold-dark: #b8860b;
+  --gold-light: #f5e6c8;
+  --text: #f1f5f9;
+  --text-muted: #94a3b8;
+}
+
+body {
+  background-color: var(--navy);
+  color: var(--text);
+}
+
+/* Glass morphism card */
+.glass-card {
+  background: rgba(30, 41, 59, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+}
+
+/* Gold gradient button */
+.btn-gold {
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  color: #0f172a;
+  font-weight: 600;
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+.btn-gold:hover {
+  background: linear-gradient(135deg, var(--gold-light), var(--gold));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(212, 168, 83, 0.3);
+}
+.btn-gold:disabled {
+  opacity: 0.5;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Dark input styling */
+.input-dark {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text);
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+.input-dark::placeholder {
+  color: rgba(148, 163, 184, 0.6);
+}
+.input-dark:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(212, 168, 83, 0.15);
+}
+.input-dark.input-error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+/* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes slideIn {
-  from { opacity: 0; transform: translateX(-8px); }
+  from { opacity: 0; transform: translateX(-12px); }
   to { opacity: 1; transform: translateX(0); }
 }
 
@@ -15,14 +81,36 @@
   to { opacity: 1; transform: scale(1); }
 }
 
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
 .animate-fade-in {
-  animation: fadeIn 0.3s ease-out forwards;
+  animation: fadeIn 0.4s ease-out forwards;
 }
 
 .animate-slide-in {
-  animation: slideIn 0.3s ease-out forwards;
+  animation: slideIn 0.4s ease-out forwards;
 }
 
 .animate-scale-in {
-  animation: scaleIn 0.2s ease-out forwards;
+  animation: scaleIn 0.25s ease-out forwards;
+}
+
+/* Gold text */
+.text-gold {
+  color: var(--gold);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--navy);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--navy-mid);
+  border-radius: 3px;
 }

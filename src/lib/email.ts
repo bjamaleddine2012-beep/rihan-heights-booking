@@ -103,37 +103,6 @@ export async function sendBookingConfirmationEmail(booking: BookingData) {
   });
 }
 
-/** Notify a user that a task was assigned to them */
-export async function sendTaskAssignmentEmail(
-  toEmail: string,
-  toName: string,
-  taskName: string,
-  dueDate: string,
-  appUrl: string
-) {
-  await resend.emails.send({
-    from: FROM_EMAIL,
-    to: toEmail,
-    subject: `New Task Assigned: ${taskName}`,
-    html: emailWrapper(`
-      <h2 style="color: #1e40af; margin-top: 0;">New Task Assigned</h2>
-      <p style="color: #374151;">Hi ${toName},</p>
-      <p style="color: #6b7280;">A new task has been assigned to you.</p>
-
-      <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-        <tr><td style="padding: 10px 8px; font-weight: 600; color: #374151; border-bottom: 1px solid #f3f4f6;">Task</td><td style="padding: 10px 8px; border-bottom: 1px solid #f3f4f6;">${taskName}</td></tr>
-        <tr><td style="padding: 10px 8px; font-weight: 600; color: #374151;">Due Date</td><td style="padding: 10px 8px;">${new Date(dueDate).toLocaleDateString()}</td></tr>
-      </table>
-
-      <div style="text-align: center; margin-top: 24px;">
-        <a href="${appUrl}/task-management" style="display: inline-block; background: #1e40af; color: white; padding: 12px 32px; text-decoration: none; border-radius: 8px; font-weight: 600;">
-          View Tasks
-        </a>
-      </div>
-    `),
-  });
-}
-
 /** Notify user that their booking status was updated */
 export async function sendStatusUpdateEmail(booking: BookingData) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
