@@ -11,44 +11,28 @@ interface BookingDetailModalProps {
   updatingId: string | null;
 }
 
-export default function BookingDetailModal({
-  booking,
-  onClose,
-  onUpdateStatus,
-  onDelete,
-  updatingId,
-}: BookingDetailModalProps) {
+export default function BookingDetailModal({ booking, onClose, onUpdateStatus, onDelete, updatingId }: BookingDetailModalProps) {
   if (!booking) return null;
 
   const statusColors: Record<string, string> = {
-    pending: "bg-yellow-100 text-yellow-800",
-    approved: "bg-green-100 text-green-800",
-    rejected: "bg-red-100 text-red-800",
+    pending: "bg-yellow-500/15 text-yellow-400",
+    approved: "bg-green-500/15 text-green-400",
+    rejected: "bg-red-500/15 text-red-400",
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} />
 
-      {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-scale-in">
+      <div className="relative bg-[var(--navy-light)] border border-white/10 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-scale-in">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+        <div className="flex items-center justify-between p-6 border-b border-white/5">
           <div>
-            <span className="font-mono text-sm text-blue-600 font-medium">
-              {booking.referenceNumber || "N/A"}
-            </span>
-            <h2 className="text-lg font-bold text-gray-900 mt-1">{booking.name}</h2>
+            <span className="font-mono text-sm text-gold font-medium">{booking.referenceNumber || "N/A"}</span>
+            <h2 className="text-lg font-bold text-white mt-1">{booking.name}</h2>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-white/5 transition-colors">
+            <svg className="w-5 h-5 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -56,90 +40,49 @@ export default function BookingDetailModal({
 
         {/* Body */}
         <div className="p-6 space-y-6">
-          {/* Status badge */}
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500">Status:</span>
-            <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[booking.status] || ""}`}>
-              {booking.status}
-            </span>
+            <span className="text-sm text-[var(--text-muted)]">Status:</span>
+            <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[booking.status] || ""}`}>{booking.status}</span>
           </div>
 
-          {/* Details grid */}
           <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="text-gray-500">Email</p>
-              <p className="font-medium text-gray-900">{booking.email}</p>
-            </div>
-            <div>
-              <p className="text-gray-500">Phone</p>
-              <p className="font-medium text-gray-900">{booking.phone}</p>
-            </div>
-            <div>
-              <p className="text-gray-500">Date</p>
-              <p className="font-medium text-gray-900">{booking.date}</p>
-            </div>
-            <div>
-              <p className="text-gray-500">Time</p>
-              <p className="font-medium text-gray-900">{booking.time}</p>
-            </div>
-            <div>
-              <p className="text-gray-500">Guests</p>
-              <p className="font-medium text-gray-900">{booking.guests || 1}</p>
-            </div>
-            <div>
-              <p className="text-gray-500">Submitted</p>
-              <p className="font-medium text-gray-900">
-                {new Date(booking.createdAt).toLocaleDateString()}
-              </p>
-            </div>
+            <div><p className="text-[var(--text-muted)]">Email</p><p className="font-medium text-white">{booking.email}</p></div>
+            <div><p className="text-[var(--text-muted)]">Phone</p><p className="font-medium text-white">{booking.phone}</p></div>
+            <div><p className="text-[var(--text-muted)]">Date</p><p className="font-medium text-white">{booking.date}</p></div>
+            <div><p className="text-[var(--text-muted)]">Time</p><p className="font-medium text-white">{booking.time}</p></div>
+            <div><p className="text-[var(--text-muted)]">Guests</p><p className="font-medium text-white">{booking.guests || 1}</p></div>
+            <div><p className="text-[var(--text-muted)]">Submitted</p><p className="font-medium text-white">{new Date(booking.createdAt).toLocaleDateString()}</p></div>
           </div>
 
-          {/* Message */}
           {booking.message && (
             <div>
-              <p className="text-sm text-gray-500 mb-1">Message</p>
-              <p className="text-sm text-gray-900 bg-gray-50 rounded-lg p-3">
-                {booking.message}
-              </p>
+              <p className="text-sm text-[var(--text-muted)] mb-1">Message</p>
+              <p className="text-sm text-white bg-white/5 rounded-lg p-3">{booking.message}</p>
             </div>
           )}
 
-          {/* Timeline */}
           <div>
-            <p className="text-sm text-gray-500 mb-3">Timeline</p>
-            <StatusTimeline
-              status={booking.status}
-              createdAt={booking.createdAt}
-              statusUpdatedAt={booking.statusUpdatedAt}
-            />
+            <p className="text-sm text-[var(--text-muted)] mb-3">Timeline</p>
+            <StatusTimeline status={booking.status} createdAt={booking.createdAt} statusUpdatedAt={booking.statusUpdatedAt} />
           </div>
         </div>
 
-        {/* Footer with actions */}
-        <div className="flex gap-3 p-6 border-t border-gray-100">
+        {/* Footer */}
+        <div className="flex gap-3 p-6 border-t border-white/5">
           {booking.status === "pending" && (
             <>
-              <button
-                onClick={() => onUpdateStatus(booking.id, "approved")}
-                disabled={updatingId === booking.id}
-                className="flex-1 bg-green-600 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors"
-              >
+              <button onClick={() => onUpdateStatus(booking.id, "approved")} disabled={updatingId === booking.id}
+                className="flex-1 bg-green-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors">
                 {updatingId === booking.id ? "Updating..." : "Approve"}
               </button>
-              <button
-                onClick={() => onUpdateStatus(booking.id, "rejected")}
-                disabled={updatingId === booking.id}
-                className="flex-1 bg-red-600 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50 transition-colors"
-              >
+              <button onClick={() => onUpdateStatus(booking.id, "rejected")} disabled={updatingId === booking.id}
+                className="flex-1 bg-red-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-red-700 disabled:opacity-50 transition-colors">
                 {updatingId === booking.id ? "Updating..." : "Reject"}
               </button>
             </>
           )}
-          <button
-            onClick={() => onDelete(booking.id)}
-            disabled={updatingId === booking.id}
-            className="px-4 py-2.5 rounded-lg text-sm font-medium border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50 transition-colors"
-          >
+          <button onClick={() => onDelete(booking.id)} disabled={updatingId === booking.id}
+            className="px-4 py-2.5 rounded-xl text-sm font-medium border border-red-500/30 text-red-400 hover:bg-red-500/10 disabled:opacity-50 transition-colors">
             Delete
           </button>
         </div>
