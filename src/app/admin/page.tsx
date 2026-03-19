@@ -53,6 +53,27 @@ export default function AdminPage() {
     setIsAuthenticated(true);
   }
 
+  async function deleteBooking(id: string) {
+    if (!confirm("Are you sure you want to delete this booking? This cannot be undone.")) return;
+
+    setUpdatingId(id);
+    try {
+      const res = await fetch(`/api/bookings/${id}`, {
+        method: "DELETE",
+        headers: { "x-admin-password": password },
+      });
+
+      if (!res.ok) throw new Error("Failed to delete");
+
+      setBookings((prev) => prev.filter((b) => b.id !== id));
+      if (selectedBooking?.id === id) setSelectedBooking(null);
+    } catch {
+      setError("Failed to delete booking");
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
   async function updateStatus(id: string, status: "approved" | "rejected") {
     setUpdatingId(id);
     try {
@@ -265,24 +286,36 @@ export default function AdminPage() {
                   </p>
                 </div>
 
-                {booking.status === "pending" && (
-                  <div className="flex gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      onClick={() => updateStatus(booking.id, "approved")}
-                      disabled={updatingId === booking.id}
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors"
-                    >
-                      {updatingId === booking.id ? "..." : "Approve"}
-                    </button>
-                    <button
-                      onClick={() => updateStatus(booking.id, "rejected")}
-                      disabled={updatingId === booking.id}
-                      className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50 transition-colors"
-                    >
-                      {updatingId === booking.id ? "..." : "Reject"}
-                    </button>
-                  </div>
-                )}
+                <div className="flex gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                  {booking.status === "pending" && (
+                    <>
+                      <button
+                        onClick={() => updateStatus(booking.id, "approved")}
+                        disabled={updatingId === booking.id}
+                        className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors"
+                      >
+                        {updatingId === booking.id ? "..." : "Approve"}
+                      </button>
+                      <button
+                        onClick={() => updateStatus(booking.id, "rejected")}
+                        disabled={updatingId === booking.id}
+                        className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50 transition-colors"
+                      >
+                        {updatingId === booking.id ? "..." : "Reject"}
+                      </button>
+                    </>
+                  )}
+                  <button
+                    onClick={() => deleteBooking(booking.id)}
+                    disabled={updatingId === booking.id}
+                    className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 disabled:opacity-50 transition-colors"
+                    title="Delete booking"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -294,6 +327,7 @@ export default function AdminPage() {
         booking={selectedBooking}
         onClose={() => setSelectedBooking(null)}
         onUpdateStatus={updateStatus}
+        onDelete={deleteBooking}
         updatingId={updatingId}
       />
     </div>

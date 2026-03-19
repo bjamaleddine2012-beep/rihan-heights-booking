@@ -7,6 +7,7 @@ interface BookingDetailModalProps {
   booking: Booking | null;
   onClose: () => void;
   onUpdateStatus: (id: string, status: "approved" | "rejected") => void;
+  onDelete: (id: string) => void;
   updatingId: string | null;
 }
 
@@ -14,6 +15,7 @@ export default function BookingDetailModal({
   booking,
   onClose,
   onUpdateStatus,
+  onDelete,
   updatingId,
 }: BookingDetailModalProps) {
   if (!booking) return null;
@@ -114,24 +116,33 @@ export default function BookingDetailModal({
         </div>
 
         {/* Footer with actions */}
-        {booking.status === "pending" && (
-          <div className="flex gap-3 p-6 border-t border-gray-100">
-            <button
-              onClick={() => onUpdateStatus(booking.id, "approved")}
-              disabled={updatingId === booking.id}
-              className="flex-1 bg-green-600 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors"
-            >
-              {updatingId === booking.id ? "Updating..." : "Approve"}
-            </button>
-            <button
-              onClick={() => onUpdateStatus(booking.id, "rejected")}
-              disabled={updatingId === booking.id}
-              className="flex-1 bg-red-600 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50 transition-colors"
-            >
-              {updatingId === booking.id ? "Updating..." : "Reject"}
-            </button>
-          </div>
-        )}
+        <div className="flex gap-3 p-6 border-t border-gray-100">
+          {booking.status === "pending" && (
+            <>
+              <button
+                onClick={() => onUpdateStatus(booking.id, "approved")}
+                disabled={updatingId === booking.id}
+                className="flex-1 bg-green-600 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors"
+              >
+                {updatingId === booking.id ? "Updating..." : "Approve"}
+              </button>
+              <button
+                onClick={() => onUpdateStatus(booking.id, "rejected")}
+                disabled={updatingId === booking.id}
+                className="flex-1 bg-red-600 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50 transition-colors"
+              >
+                {updatingId === booking.id ? "Updating..." : "Reject"}
+              </button>
+            </>
+          )}
+          <button
+            onClick={() => onDelete(booking.id)}
+            disabled={updatingId === booking.id}
+            className="px-4 py-2.5 rounded-lg text-sm font-medium border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50 transition-colors"
+          >
+            Delete
+          </button>
+        </div>
       </div>
     </div>
   );

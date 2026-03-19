@@ -65,3 +65,38 @@ export async function PATCH(
     );
   }
 }
+
+// DELETE /api/bookings/:id — Delete a booking
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+
+    const password = request.headers.get("x-admin-password");
+    if (password !== process.env.ADMIN_PASSWORD) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const docRef = adminDb.collection("bookings").doc(id);
+    const doc = await docRef.get();
+
+    if (!doc.exists) {
+      return NextResponse.json(
+        { error: "Booking not found" },
+        { status: 404 }
+      );
+    }
+
+    await docRef.delete();
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting booking:", error);
+    return NextResponse.json(
+      { error: "Failed to delete booking" },
+      { status: 500 }
+    );
+  }
+}
