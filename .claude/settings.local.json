@@ -12,7 +12,8 @@
       "Read(//c/Users/bjama/AppData/Roaming/**)",
       "Read(//c/Users/bjama/AppData/Local/**)",
       "WebFetch(domain:jamaleddine-booking.vercel.app)",
-      "Bash(curl -s -X POST https://jamaleddine-booking.vercel.app/api/bookings -H \"Content-Type: application/json\" -d '{\"\"name\"\":\"\"Test\"\",\"\"email\"\":\"\"test@test.com\"\",\"\"date\"\":\"\"2026-03-20\"\",\"\"time\"\":\"\"10:00\"\",\"\"message\"\":\"\"test\"\"}')"
+      "Bash(curl -s -X POST https://jamaleddine-booking.vercel.app/api/bookings -H \"Content-Type: application/json\" -d '{\"\"name\"\":\"\"Test\"\",\"\"email\"\":\"\"test@test.com\"\",\"\"date\"\":\"\"2026-03-20\"\",\"\"time\"\":\"\"10:00\"\",\"\"message\"\":\"\"test\"\"}')",
+      "Bash(npx next:*)"
     ]
   }
 }

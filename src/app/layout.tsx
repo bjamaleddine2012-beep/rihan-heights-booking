@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 export const metadata: Metadata = {
   title: "Rihan Heights Tower B701 — Booking",
@@ -35,6 +36,12 @@ export default function RootLayout({
                   Track Booking
                 </a>
                 <a
+                  href="/task-management"
+                  className="text-gray-600 hover:text-blue-600 transition-colors"
+                >
+                  Tasks
+                </a>
+                <a
                   href="/admin"
                   className="text-gray-600 hover:text-blue-600 transition-colors"
                 >
@@ -46,9 +53,11 @@ export default function RootLayout({
         </nav>
 
         {/* Page content */}
+        <AuthProvider>
         <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {children}
         </main>
+        </AuthProvider>
 
         {/* Footer */}
         <footer className="border-t border-gray-200 mt-auto">
