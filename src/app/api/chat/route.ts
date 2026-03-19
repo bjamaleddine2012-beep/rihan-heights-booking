@@ -1,9 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
 
 const SYSTEM_PROMPT = `You are a friendly and helpful AI concierge for Rihan Heights Tower B701, a premium property in Abu Dhabi.
 
@@ -31,27 +26,53 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Messages are required" }, { status: 400 });
     }
 
-    if (!process.env.ANTHROPIC_API_KEY) {
+    if (!process.env.GEMINI_API_KEY) {
       return NextResponse.json({ error: "AI assistant is not configured" }, { status: 503 });
     }
 
-    const response = await anthropic.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 300,
-      system: SYSTEM_PROMPT,
-      messages: messages.map((m: { role: string; content: string }) => ({
-        role: m.role as "user" | "assistant",
-        content: m.content,
-      })),
-    });
+    // Build Gemini conversation format
+    const geminiContents = [];
 
-    const textBlock = response.content.find((block) => block.type === "text");
-    const reply = textBlock ? textBlock.text : "I'm sorry, I couldn't generate a response.";
+    // Add system instruction as first user turn context
+    for (const m of messages) {
+      geminiContents.push({
+        role: m.role === "assistant" ? "model" : "user",
+        parts: [{ text: m.content }],
+      });
+    }
+
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system_instruction: {
+            parts: [{ text: SYSTEM_PROMPT }],
+          },
+          contents: geminiContents,
+          generationConfig: {
+            maxOutputTokens: 300,
+            temperature: 0.7,
+          },
+        }),
+      }
+    );
+
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`Gemini API error: ${res.status} ${err}`);
+    }
+
+    const data = await res.json();
+    const reply =
+      data.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "I'm sorry, I couldn't generate a response.";
 
     return NextResponse.json({ reply });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error("Chat API error:", message, error);
+    console.error("Chat API error:", message);
     return NextResponse.json({ error: "Failed to get AI response", details: message }, { status: 500 });
   }
 }
