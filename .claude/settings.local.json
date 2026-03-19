@@ -19,7 +19,9 @@
       "Bash(npx create-next-app@latest task-management --typescript --tailwind --eslint --app --src-dir --no-import-alias --use-npm)",
       "Bash(npx create-next-app@latest task-management --typescript --tailwind --eslint --app --src-dir --no-import-alias --use-npm --no-turbopack)",
       "Bash(yes \"no\")",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(gh auth:*)",
+      "Bash(gh repo:*)"
     ]
   }
 }

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import ChatWidget from "@/components/ChatWidget";
 
 export const metadata: Metadata = {
   title: "Rihan Heights Tower B701 — Booking",
@@ -48,6 +49,9 @@ export default function RootLayout({
             &copy; {new Date().getFullYear()} Rihan Heights Tower B701. All rights reserved.
           </div>
         </footer>
+
+        {/* AI Chat Widget */}
+        <ChatWidget />
       </body>
     </html>
   );
