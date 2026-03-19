@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
-import { sendAdminNotification } from "@/lib/email";
+import { sendAdminNotification, sendBookingConfirmationEmail } from "@/lib/email";
+import { generateReferenceNumber } from "@/lib/reference";
 
 // POST /api/bookings — Create a new booking
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, phone, date, time, message } = body;
+    const { name, email, phone, date, time, guests, message } = body;
 
-    // Validate required fields
     if (!name || !email || !phone || !date || !time) {
       return NextResponse.json(
         { error: "Name, email, phone, date, and time are required" },
@@ -16,13 +16,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create booking document
     const bookingData = {
+      referenceNumber: generateReferenceNumber(),
       name,
       email,
       phone,
       date,
       time,
+      guests: Number(guests) || 1,
       message: message || "",
       status: "pending",
       createdAt: new Date().toISOString(),
@@ -30,9 +31,12 @@ export async function POST(request: NextRequest) {
 
     const docRef = await adminDb.collection("bookings").add(bookingData);
 
-    // Send email notification to admin (don't block the response)
+    // Send emails (non-blocking)
     sendAdminNotification({ id: docRef.id, ...bookingData }).catch((err) =>
       console.error("Failed to send admin notification:", err)
+    );
+    sendBookingConfirmationEmail({ id: docRef.id, ...bookingData }).catch((err) =>
+      console.error("Failed to send booking confirmation:", err)
     );
 
     return NextResponse.json(
@@ -52,7 +56,6 @@ export async function POST(request: NextRequest) {
 // GET /api/bookings — Fetch all bookings (admin use)
 export async function GET(request: NextRequest) {
   try {
-    // Simple auth check via query param or header
     const password =
       request.headers.get("x-admin-password") ||
       request.nextUrl.searchParams.get("password");

@@ -1,4 +1,5 @@
 import BookingForm from "@/components/BookingForm";
+import Link from "next/link";
 
 export default function HomePage() {
   return (
@@ -15,6 +16,13 @@ export default function HomePage() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8">
         <BookingForm />
       </div>
+
+      <p className="text-center text-sm text-gray-500 mt-6">
+        Already have a booking?{" "}
+        <Link href="/booking/lookup" className="text-blue-600 hover:underline font-medium">
+          Track it here
+        </Link>
+      </p>
     </div>
   );
 }

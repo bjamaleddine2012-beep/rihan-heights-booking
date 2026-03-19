@@ -10,7 +10,6 @@ export async function PATCH(
   try {
     const { id } = await params;
 
-    // Auth check
     const password = request.headers.get("x-admin-password");
     if (password !== process.env.ADMIN_PASSWORD) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -26,7 +25,6 @@ export async function PATCH(
       );
     }
 
-    // Update the booking in Firestore
     const docRef = adminDb.collection("bookings").doc(id);
     const doc = await docRef.get();
 
@@ -37,20 +35,23 @@ export async function PATCH(
       );
     }
 
-    await docRef.update({ status });
+    const statusUpdatedAt = new Date().toISOString();
+    await docRef.update({ status, statusUpdatedAt });
 
-    const updatedBooking = { id, ...doc.data(), status } as {
+    const updatedBooking = { id, ...doc.data(), status, statusUpdatedAt } as {
       id: string;
+      referenceNumber: string;
       name: string;
       email: string;
       phone: string;
       date: string;
       time: string;
+      guests: number;
       message: string;
       status: string;
+      statusUpdatedAt: string;
     };
 
-    // Send status update email to the user (don't block the response)
     sendStatusUpdateEmail(updatedBooking).catch((err) =>
       console.error("Failed to send status update email:", err)
     );

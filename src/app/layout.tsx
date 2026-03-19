@@ -21,12 +21,18 @@ export default function RootLayout({
               <a href="/" className="text-xl font-bold text-blue-600">
                 Rihan Heights <span className="text-gray-500 font-normal text-sm">B701</span>
               </a>
-              <div className="flex gap-4">
+              <div className="flex gap-4 text-sm">
                 <a
                   href="/"
                   className="text-gray-600 hover:text-blue-600 transition-colors"
                 >
                   Book Now
+                </a>
+                <a
+                  href="/booking/lookup"
+                  className="text-gray-600 hover:text-blue-600 transition-colors"
+                >
+                  Track Booking
                 </a>
                 <a
                   href="/admin"
