@@ -17,6 +17,7 @@ export default function BookingForm() {
     const data = {
       name: formData.get("name") as string,
       email: formData.get("email") as string,
+      phone: formData.get("phone") as string,
       date: formData.get("date") as string,
       time: formData.get("time") as string,
       message: formData.get("message") as string,
@@ -77,6 +78,20 @@ export default function BookingForm() {
           name="email"
           required
           placeholder="john@example.com"
+          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+          Phone Number *
+        </label>
+        <input
+          type="tel"
+          id="phone"
+          name="phone"
+          required
+          placeholder="+971 50 123 4567"
           className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow"
         />
       </div>

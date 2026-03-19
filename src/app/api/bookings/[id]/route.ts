@@ -43,6 +43,7 @@ export async function PATCH(
       id: string;
       name: string;
       email: string;
+      phone: string;
       date: string;
       time: string;
       message: string;

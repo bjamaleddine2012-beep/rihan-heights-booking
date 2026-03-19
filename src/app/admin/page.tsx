@@ -186,6 +186,7 @@ export default function AdminPage() {
                     <StatusBadge status={booking.status} />
                   </div>
                   <p className="text-sm text-gray-600">{booking.email}</p>
+                  <p className="text-sm text-gray-600">{booking.phone}</p>
                   <p className="text-sm text-gray-600">
                     Date: <span className="font-medium">{booking.date}</span>
                     {booking.time && (

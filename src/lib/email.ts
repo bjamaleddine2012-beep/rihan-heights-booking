@@ -8,6 +8,7 @@ export interface BookingData {
   id: string;
   name: string;
   email: string;
+  phone: string;
   date: string;
   time: string;
   message: string;
@@ -34,6 +35,7 @@ export async function sendAdminNotification(booking: BookingData) {
         <table style="width: 100%; border-collapse: collapse;">
           <tr><td style="padding: 8px; font-weight: bold;">Name:</td><td style="padding: 8px;">${booking.name}</td></tr>
           <tr><td style="padding: 8px; font-weight: bold;">Email:</td><td style="padding: 8px;">${booking.email}</td></tr>
+          <tr><td style="padding: 8px; font-weight: bold;">Phone:</td><td style="padding: 8px;">${booking.phone}</td></tr>
           <tr><td style="padding: 8px; font-weight: bold;">Date:</td><td style="padding: 8px;">${booking.date}</td></tr>
           <tr><td style="padding: 8px; font-weight: bold;">Time:</td><td style="padding: 8px;">${booking.time}</td></tr>
           <tr><td style="padding: 8px; font-weight: bold;">Message:</td><td style="padding: 8px;">${booking.message || "No message"}</td></tr>

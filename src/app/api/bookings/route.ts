@@ -6,12 +6,12 @@ import { sendAdminNotification } from "@/lib/email";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, date, time, message } = body;
+    const { name, email, phone, date, time, message } = body;
 
     // Validate required fields
-    if (!name || !email || !date || !time) {
+    if (!name || !email || !phone || !date || !time) {
       return NextResponse.json(
-        { error: "Name, email, date, and time are required" },
+        { error: "Name, email, phone, date, and time are required" },
         { status: 400 }
       );
     }
@@ -20,6 +20,7 @@ export async function POST(request: NextRequest) {
     const bookingData = {
       name,
       email,
+      phone,
       date,
       time,
       message: message || "",
