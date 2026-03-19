@@ -10,7 +10,7 @@ interface Message {
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", content: "Welcome to Rihan Heights Tower B701! How can I help you today?" },
+    { role: "assistant", content: "Hello! I'm Rihan, your personal concierge. How can I assist you today?" },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -80,7 +80,7 @@ export default function ChatWidget() {
                 </svg>
               </div>
               <div>
-                <p className="text-sm font-semibold text-white">AI Concierge</p>
+                <p className="text-sm font-semibold text-white">Rihan</p>
                 <p className="text-xs text-green-400 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
                   Online
