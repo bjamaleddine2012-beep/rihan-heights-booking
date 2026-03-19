@@ -49,8 +49,9 @@ export async function POST(request: NextRequest) {
     const reply = textBlock ? textBlock.text : "I'm sorry, I couldn't generate a response.";
 
     return NextResponse.json({ reply });
-  } catch (error) {
-    console.error("Chat API error:", error);
-    return NextResponse.json({ error: "Failed to get AI response" }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Chat API error:", message, error);
+    return NextResponse.json({ error: "Failed to get AI response", details: message }, { status: 500 });
   }
 }

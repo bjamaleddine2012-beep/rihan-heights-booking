@@ -21,7 +21,9 @@
       "Bash(yes \"no\")",
       "Bash(npm install:*)",
       "Bash(gh auth:*)",
-      "Bash(gh repo:*)"
+      "Bash(gh repo:*)",
+      "Bash(npx vercel:*)",
+      "Bash(curl -s -X POST https://jamaleddine-booking.vercel.app/api/chat -H \"Content-Type: application/json\" -d '{\"\"messages\"\":[{\"\"role\"\":\"\"user\"\",\"\"content\"\":\"\"hello\"\"}]}')"
     ]
   }
 }
