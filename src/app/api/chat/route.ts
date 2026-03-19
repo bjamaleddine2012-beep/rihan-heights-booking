@@ -26,47 +26,41 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Messages are required" }, { status: 400 });
     }
 
-    if (!process.env.GEMINI_API_KEY) {
+    if (!process.env.GROQ_API_KEY) {
       return NextResponse.json({ error: "AI assistant is not configured" }, { status: 503 });
     }
 
-    // Build Gemini conversation format
-    const geminiContents = [];
+    // Build messages in OpenAI-compatible format (Groq uses this)
+    const groqMessages = [
+      { role: "system", content: SYSTEM_PROMPT },
+      ...messages.map((m: { role: string; content: string }) => ({
+        role: m.role,
+        content: m.content,
+      })),
+    ];
 
-    // Add system instruction as first user turn context
-    for (const m of messages) {
-      geminiContents.push({
-        role: m.role === "assistant" ? "model" : "user",
-        parts: [{ text: m.content }],
-      });
-    }
-
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          system_instruction: {
-            parts: [{ text: SYSTEM_PROMPT }],
-          },
-          contents: geminiContents,
-          generationConfig: {
-            maxOutputTokens: 300,
-            temperature: 0.7,
-          },
-        }),
-      }
-    );
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: groqMessages,
+        max_tokens: 300,
+        temperature: 0.7,
+      }),
+    });
 
     if (!res.ok) {
       const err = await res.text();
-      throw new Error(`Gemini API error: ${res.status} ${err}`);
+      throw new Error(`Groq API error: ${res.status} ${err}`);
     }
 
     const data = await res.json();
     const reply =
-      data.candidates?.[0]?.content?.parts?.[0]?.text ||
+      data.choices?.[0]?.message?.content ||
       "I'm sorry, I couldn't generate a response.";
 
     return NextResponse.json({ reply });
