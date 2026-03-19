@@ -33,11 +33,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(publicBookingData(snapshot.docs[0].data()));
     }
 
-    const snapshot = await adminDb.collection("bookings").where("email", "==", email).orderBy("createdAt", "desc").get();
-    return NextResponse.json(snapshot.docs.map((doc) => publicBookingData(doc.data())));
-  } catch (error) {
-    console.error("Error looking up booking:", error);
-    return NextResponse.json({ error: "Failed to look up booking" }, { status: 500 });
+    const snapshot = await adminDb.collection("bookings").where("email", "==", email).get();
+    const results = snapshot.docs
+      .map((doc) => publicBookingData(doc.data()))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return NextResponse.json(results);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Error looking up booking:", message, error);
+    return NextResponse.json({ error: "Failed to look up booking", details: message }, { status: 500 });
   }
 }
 
