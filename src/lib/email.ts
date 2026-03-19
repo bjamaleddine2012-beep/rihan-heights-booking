@@ -10,6 +10,7 @@ export interface BookingData {
   name: string;
   email: string;
   phone: string;
+  nationality: string;
   date: string;
   time: string;
   guests: number;
@@ -56,6 +57,7 @@ export async function sendAdminNotification(booking: BookingData) {
         <tr><td style="padding: 10px 8px; font-weight: 600; color: #374151; border-bottom: 1px solid #f3f4f6;">Name</td><td style="padding: 10px 8px; border-bottom: 1px solid #f3f4f6;">${booking.name}</td></tr>
         <tr><td style="padding: 10px 8px; font-weight: 600; color: #374151; border-bottom: 1px solid #f3f4f6;">Email</td><td style="padding: 10px 8px; border-bottom: 1px solid #f3f4f6;">${booking.email}</td></tr>
         <tr><td style="padding: 10px 8px; font-weight: 600; color: #374151; border-bottom: 1px solid #f3f4f6;">Phone</td><td style="padding: 10px 8px; border-bottom: 1px solid #f3f4f6;">${booking.phone}</td></tr>
+        <tr><td style="padding: 10px 8px; font-weight: 600; color: #374151; border-bottom: 1px solid #f3f4f6;">Nationality</td><td style="padding: 10px 8px; border-bottom: 1px solid #f3f4f6;">${booking.nationality || "—"}</td></tr>
         <tr><td style="padding: 10px 8px; font-weight: 600; color: #374151; border-bottom: 1px solid #f3f4f6;">Date</td><td style="padding: 10px 8px; border-bottom: 1px solid #f3f4f6;">${booking.date}</td></tr>
         <tr><td style="padding: 10px 8px; font-weight: 600; color: #374151; border-bottom: 1px solid #f3f4f6;">Time</td><td style="padding: 10px 8px; border-bottom: 1px solid #f3f4f6;">${booking.time}</td></tr>
         <tr><td style="padding: 10px 8px; font-weight: 600; color: #374151; border-bottom: 1px solid #f3f4f6;">Guests</td><td style="padding: 10px 8px; border-bottom: 1px solid #f3f4f6;">${booking.guests}</td></tr>

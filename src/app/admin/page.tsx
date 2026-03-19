@@ -177,7 +177,7 @@ export default function AdminPage() {
                     <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[booking.status] || ""}`}>{booking.status}</span>
                     {booking.referenceNumber && <span className="font-mono text-xs text-[var(--text-muted)]">{booking.referenceNumber}</span>}
                   </div>
-                  <p className="text-sm text-[var(--text-muted)]">{booking.email} &middot; {booking.phone}</p>
+                  <p className="text-sm text-[var(--text-muted)]">{booking.email} &middot; {booking.phone}{booking.nationality && <> &middot; {booking.nationality}</>}</p>
                   <p className="text-sm text-[var(--text-muted)]">
                     {booking.date} at {booking.time}
                     {booking.guests && booking.guests > 1 && <> &middot; {booking.guests} guests</>}

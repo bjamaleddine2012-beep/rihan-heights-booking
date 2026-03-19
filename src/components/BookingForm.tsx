@@ -3,10 +3,40 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+const NATIONALITIES = [
+  "Afghan", "Albanian", "Algerian", "American", "Andorran", "Angolan", "Argentine",
+  "Armenian", "Australian", "Austrian", "Azerbaijani", "Bahraini", "Bangladeshi",
+  "Barbadian", "Belarusian", "Belgian", "Belizean", "Beninese", "Bhutanese",
+  "Bolivian", "Bosnian", "Brazilian", "British", "Bruneian", "Bulgarian",
+  "Burkinabe", "Burmese", "Burundian", "Cambodian", "Cameroonian", "Canadian",
+  "Cape Verdean", "Central African", "Chadian", "Chilean", "Chinese", "Colombian",
+  "Comorian", "Congolese", "Costa Rican", "Croatian", "Cuban", "Cypriot", "Czech",
+  "Danish", "Djiboutian", "Dominican", "Dutch", "Ecuadorian", "Egyptian", "Emirati",
+  "Equatorial Guinean", "Eritrean", "Estonian", "Ethiopian", "Fijian", "Filipino",
+  "Finnish", "French", "Gabonese", "Gambian", "Georgian", "German", "Ghanaian",
+  "Greek", "Grenadian", "Guatemalan", "Guinean", "Guyanese", "Haitian", "Honduran",
+  "Hungarian", "Icelandic", "Indian", "Indonesian", "Iranian", "Iraqi", "Irish",
+  "Israeli", "Italian", "Ivorian", "Jamaican", "Japanese", "Jordanian", "Kazakh",
+  "Kenyan", "Kuwaiti", "Kyrgyz", "Laotian", "Latvian", "Lebanese", "Liberian",
+  "Libyan", "Lithuanian", "Luxembourgish", "Macedonian", "Malagasy", "Malawian",
+  "Malaysian", "Maldivian", "Malian", "Maltese", "Mauritanian", "Mauritian",
+  "Mexican", "Moldovan", "Monegasque", "Mongolian", "Montenegrin", "Moroccan",
+  "Mozambican", "Namibian", "Nepalese", "New Zealander", "Nicaraguan", "Nigerian",
+  "North Korean", "Norwegian", "Omani", "Pakistani", "Palestinian", "Panamanian",
+  "Papua New Guinean", "Paraguayan", "Peruvian", "Polish", "Portuguese", "Qatari",
+  "Romanian", "Russian", "Rwandan", "Saudi", "Senegalese", "Serbian", "Singaporean",
+  "Slovak", "Slovenian", "Somali", "South African", "South Korean", "Spanish",
+  "Sri Lankan", "Sudanese", "Surinamese", "Swedish", "Swiss", "Syrian", "Taiwanese",
+  "Tajik", "Tanzanian", "Thai", "Togolese", "Trinidadian", "Tunisian", "Turkish",
+  "Turkmen", "Ugandan", "Ukrainian", "Uruguayan", "Uzbek", "Venezuelan",
+  "Vietnamese", "Yemeni", "Zambian", "Zimbabwean",
+];
+
 interface FormErrors {
   name?: string;
   email?: string;
   phone?: string;
+  nationality?: string;
   date?: string;
   time?: string;
   guests?: string;
@@ -22,6 +52,7 @@ export default function BookingForm() {
     name: "",
     email: "",
     phone: "",
+    nationality: "",
     date: "",
     time: "",
     guests: "1",
@@ -37,13 +68,43 @@ export default function BookingForm() {
 
   function validate(): boolean {
     const newErrors: FormErrors = {};
-    if (!form.name || form.name.trim().length < 2) newErrors.name = "Name must be at least 2 characters";
-    if (!form.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) newErrors.email = "Please enter a valid email";
-    if (!form.phone || form.phone.trim().length < 6) newErrors.phone = "Please enter a valid phone number";
+
+    if (!form.name || form.name.trim().length < 2)
+      newErrors.name = "Name must be at least 2 characters";
+
+    // Email validation — must have valid format with proper domain
+    if (!form.email) {
+      newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email)) {
+      newErrors.email = "Please enter a valid email (e.g. name@example.com)";
+    } else if (/\.(con|cmo|coom|gmial|gamil|yahooo)$/i.test(form.email)) {
+      newErrors.email = "Did you make a typo in the email domain?";
+    }
+
+    // Phone validation — must be digits (with optional +, spaces, dashes), min 7 digits
+    if (!form.phone) {
+      newErrors.phone = "Phone number is required";
+    } else {
+      const digitsOnly = form.phone.replace(/[\s\-\(\)\+]/g, "");
+      if (!/^\d+$/.test(digitsOnly)) {
+        newErrors.phone = "Phone number can only contain digits, +, spaces, and dashes";
+      } else if (digitsOnly.length < 7) {
+        newErrors.phone = "Phone number must have at least 7 digits";
+      } else if (digitsOnly.length > 15) {
+        newErrors.phone = "Phone number is too long";
+      }
+    }
+
+    if (!form.nationality)
+      newErrors.nationality = "Please select your nationality";
+
     if (!form.date) newErrors.date = "Please select a date";
     if (!form.time) newErrors.time = "Please select a time";
+
     const guestsNum = Number(form.guests);
-    if (!guestsNum || guestsNum < 1 || guestsNum > 20) newErrors.guests = "Guests must be 1-20";
+    if (!guestsNum || guestsNum < 1 || guestsNum > 20)
+      newErrors.guests = "Guests must be 1-20";
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
@@ -118,6 +179,19 @@ export default function BookingForm() {
               <input type="tel" id="phone" value={form.phone} onChange={(e) => updateField("phone", e.target.value)} placeholder="+971 50 123 4567" className={inputClass("phone")} />
               {errors.phone && <p className="text-red-400 text-xs mt-1">{errors.phone}</p>}
             </div>
+          </div>
+
+          <div>
+            <label htmlFor="nationality" className="block text-sm font-medium text-[var(--text-muted)] mb-1.5">
+              Nationality *
+            </label>
+            <select id="nationality" value={form.nationality} onChange={(e) => updateField("nationality", e.target.value)} className={inputClass("nationality")}>
+              <option value="">Select your nationality</option>
+              {NATIONALITIES.map((nat) => (
+                <option key={nat} value={nat}>{nat}</option>
+              ))}
+            </select>
+            {errors.nationality && <p className="text-red-400 text-xs mt-1">{errors.nationality}</p>}
           </div>
         </div>
       </div>

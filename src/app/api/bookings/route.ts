@@ -7,7 +7,7 @@ import { generateReferenceNumber } from "@/lib/reference";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, phone, date, time, guests, message } = body;
+    const { name, email, phone, nationality, date, time, guests, message } = body;
 
     if (!name || !email || !phone || !date || !time) {
       return NextResponse.json(
@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
       name,
       email,
       phone,
+      nationality: nationality || "",
       date,
       time,
       guests: Number(guests) || 1,

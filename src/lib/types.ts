@@ -4,6 +4,7 @@ export interface Booking {
   name: string;
   email: string;
   phone: string;
+  nationality: string;
   date: string;
   time: string;
   guests: number;
