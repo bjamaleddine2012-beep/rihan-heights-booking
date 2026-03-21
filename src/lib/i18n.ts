@@ -266,5 +266,7 @@ export const translations = {
 export type TranslationKey = keyof typeof translations.en;
 
 export function t(locale: Locale, key: TranslationKey): string {
-  return translations[locale][key] || translations.en[key] || key;
+  const dict = translations[locale] as Record<string, string>;
+  const fallback = translations.en as Record<string, string>;
+  return dict[key] || fallback[key] || key;
 }
