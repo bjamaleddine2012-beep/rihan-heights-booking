@@ -19,9 +19,9 @@ interface BookingDetail {
 }
 
 const arrivalSteps = [
-  { key: "left-home", label: "Left Home", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4" },
-  { key: "on-the-way", label: "On The Way", icon: "M13 10V3L4 14h7v7l9-11h-7z" },
-  { key: "arrived", label: "Arrived", icon: "M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z" },
+  { key: "left-home", label: "Left Home", labelAr: "غادرت المنزل", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4" },
+  { key: "on-the-way", label: "On The Way", labelAr: "في الطريق", icon: "M13 10V3L4 14h7v7l9-11h-7z" },
+  { key: "arrived", label: "Arrived", labelAr: "وصلت", icon: "M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z" },
 ];
 
 export default function BookingDetailPage({ params }: { params: Promise<{ ref: string }> }) {
@@ -170,13 +170,55 @@ export default function BookingDetailPage({ params }: { params: Promise<{ ref: s
         {statusMessage[booking.status]}
       </div>
 
+      {/* QR Code + Calendar — only for approved bookings */}
+      {booking.status === "approved" && (
+        <div className="glass-card p-6 mb-6">
+          <h2 className="text-xs font-semibold text-gold uppercase tracking-[0.2em] mb-4">Your Booking Pass</h2>
+
+          {/* QR Code */}
+          <div className="flex justify-center mb-4">
+            <img
+              src={`/api/bookings/qr?ref=${encodeURIComponent(booking.referenceNumber)}`}
+              alt="Booking QR Code"
+              className="w-40 h-40 rounded-xl"
+              width={160}
+              height={160}
+            />
+          </div>
+          <p className="text-xs text-center text-[var(--text-muted)] mb-4">Show this QR code at arrival for quick check-in</p>
+
+          {/* Download buttons */}
+          <div className="grid grid-cols-2 gap-3">
+            <a
+              href={`/api/bookings/qr?ref=${encodeURIComponent(booking.referenceNumber)}`}
+              download={`qr-${booking.referenceNumber}.png`}
+              className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium border border-white/10 text-[var(--text-muted)] hover:bg-white/5 hover:text-white transition-all"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              QR Code
+            </a>
+            <a
+              href={`/api/bookings/calendar?ref=${encodeURIComponent(booking.referenceNumber)}&name=${encodeURIComponent(booking.name)}&date=${booking.date}&time=${booking.time}`}
+              download={`${booking.referenceNumber}.ics`}
+              className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium border border-white/10 text-[var(--text-muted)] hover:bg-white/5 hover:text-white transition-all"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Calendar
+            </a>
+          </div>
+        </div>
+      )}
+
       {/* Arrival Tracking — only for approved bookings */}
       {booking.status === "approved" && (
         <div className="glass-card p-6 mb-6">
           <h2 className="text-xs font-semibold text-gold uppercase tracking-[0.2em] mb-4">Arrival Tracking</h2>
           <p className="text-sm text-[var(--text-muted)] mb-4">Let us know when you&apos;re on your way!</p>
 
-          {/* Arrival status buttons */}
           <div className="grid grid-cols-3 gap-2 mb-4">
             {arrivalSteps.map((step) => {
               const isActive = currentArrival === step.key;
@@ -199,9 +241,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ ref: s
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={step.icon} />
                   </svg>
                   {step.label}
-                  {isActive && (
-                    <span className="w-2 h-2 rounded-full bg-gold animate-pulse" />
-                  )}
+                  {isActive && <span className="w-2 h-2 rounded-full bg-gold animate-pulse" />}
                 </button>
               );
             })}
@@ -213,7 +253,6 @@ export default function BookingDetailPage({ params }: { params: Promise<{ ref: s
             </p>
           )}
 
-          {/* Share location button */}
           <button
             onClick={shareLocation}
             disabled={sharingLocation}

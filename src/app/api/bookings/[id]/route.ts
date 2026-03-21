@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { sendStatusUpdateEmail } from "@/lib/email";
+import { sendBookingWhatsApp } from "@/lib/twilio";
 
 // PATCH /api/bookings/:id — Update booking status
 export async function PATCH(
@@ -38,24 +39,40 @@ export async function PATCH(
     const statusUpdatedAt = new Date().toISOString();
     await docRef.update({ status, statusUpdatedAt });
 
-    const updatedBooking = { id, ...doc.data(), status, statusUpdatedAt } as {
-      id: string;
-      referenceNumber: string;
-      name: string;
-      email: string;
-      phone: string;
-      nationality: string;
-      date: string;
-      time: string;
-      guests: number;
-      message: string;
-      status: string;
-      statusUpdatedAt: string;
+    const bookingData = doc.data()!;
+    const updatedBooking = {
+      id,
+      referenceNumber: bookingData.referenceNumber || "",
+      name: bookingData.name || "",
+      email: bookingData.email || "",
+      phone: bookingData.phone || "",
+      nationality: bookingData.nationality || "",
+      date: bookingData.date || "",
+      time: bookingData.time || "",
+      guests: bookingData.guests || 1,
+      message: bookingData.message || "",
+      status,
+      statusUpdatedAt,
     };
 
+    // Send email notification (non-blocking)
     sendStatusUpdateEmail(updatedBooking).catch((err) =>
       console.error("Failed to send status update email:", err)
     );
+
+    // Send WhatsApp notification (non-blocking)
+    if (updatedBooking.phone) {
+      sendBookingWhatsApp(
+        updatedBooking.phone,
+        status as "approved" | "rejected",
+        {
+          name: updatedBooking.name,
+          referenceNumber: updatedBooking.referenceNumber,
+          date: updatedBooking.date,
+          time: updatedBooking.time,
+        }
+      ).catch((err) => console.error("WhatsApp status update failed:", err));
+    }
 
     return NextResponse.json(updatedBooking);
   } catch (error) {

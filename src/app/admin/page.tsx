@@ -116,10 +116,15 @@ export default function AdminPage() {
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h1 className="text-2xl font-bold text-white">Booking Dashboard</h1>
-        <button onClick={fetchBookings} disabled={loading}
-          className="text-sm px-4 py-2 rounded-xl border border-white/10 text-[var(--text-muted)] hover:bg-white/5 transition-colors disabled:opacity-50">
-          {loading ? "Refreshing..." : "Refresh"}
-        </button>
+        <div className="flex gap-2">
+          <a href="/admin/analytics" className="text-sm px-4 py-2 rounded-xl border border-gold/30 text-gold hover:bg-gold/10 transition-colors">
+            Analytics
+          </a>
+          <button onClick={fetchBookings} disabled={loading}
+            className="text-sm px-4 py-2 rounded-xl border border-white/10 text-[var(--text-muted)] hover:bg-white/5 transition-colors disabled:opacity-50">
+            {loading ? "Refreshing..." : "Refresh"}
+          </button>
+        </div>
       </div>
 
       {error && <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm mb-6">{error}</div>}

@@ -10,6 +10,8 @@ export interface Booking {
   guests: number;
   message: string;
   status: "pending" | "approved" | "rejected";
+  recurrence?: "none" | "weekly" | "biweekly" | "monthly";
+  parentBookingId?: string;
   arrivalStatus?: "none" | "left-home" | "on-the-way" | "arrived";
   arrivalUpdatedAt?: string;
   locationLink?: string;

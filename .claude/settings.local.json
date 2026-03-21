@@ -25,7 +25,19 @@
       "Bash(npx vercel:*)",
       "Bash(curl -s -X POST https://jamaleddine-booking.vercel.app/api/chat -H \"Content-Type: application/json\" -d '{\"\"messages\"\":[{\"\"role\"\":\"\"user\"\",\"\"content\"\":\"\"hello\"\"}]}')",
       "Bash(npm run:*)",
-      "Bash(curl -s \"https://jamaleddine-booking.vercel.app/api/bookings/lookup?email=test@test.com\")"
+      "Bash(curl -s \"https://jamaleddine-booking.vercel.app/api/bookings/lookup?email=test@test.com\")",
+      "Bash(node -e \":*)",
+      "Bash(printf 'AIzaSyDpv18MS8jxzCdQuM1Mbo7oOgx2EmZci7U')",
+      "Bash(printf 'booking-2914a.firebaseapp.com')",
+      "Bash(printf 'booking-2914a')",
+      "Bash(printf '1:524485783884:web:20c19f39232e9b15285fe9')",
+      "Bash(printf 'booking-2914a.firebasestorage.app')",
+      "Bash(printf '524485783884')",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(npm.cmd run:*)",
+      "Bash(curl -s https://task-management-nine-pearl.vercel.app/api/me)",
+      "Bash(ls /c/Users/bjama/AppData/Roaming/nvm/*/node.exe)",
+      "Read(//c/Program Files/**)"
     ]
   }
 }
