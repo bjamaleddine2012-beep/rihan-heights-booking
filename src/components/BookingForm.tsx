@@ -117,6 +117,11 @@ export default function BookingForm() {
     e.preventDefault();
     if (!validate()) return;
 
+    if (!phoneVerified) {
+      setServerError("Please verify your phone number before submitting.");
+      return;
+    }
+
     setLoading(true);
     setServerError("");
 
