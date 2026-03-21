@@ -37,7 +37,8 @@
       "Bash(npm.cmd run:*)",
       "Bash(curl -s https://task-management-nine-pearl.vercel.app/api/me)",
       "Bash(ls /c/Users/bjama/AppData/Roaming/nvm/*/node.exe)",
-      "Read(//c/Program Files/**)"
+      "Read(//c/Program Files/**)",
+      "Bash(curl -s http://localhost:3000)"
     ]
   }
 }

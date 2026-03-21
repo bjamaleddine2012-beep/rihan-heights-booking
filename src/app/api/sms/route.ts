@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateOTP, verifyOTP } from "@/lib/otp";
-import { sendSMS } from "@/lib/twilio";
+import { sendWhatsApp } from "@/lib/twilio";
 
-// POST /api/sms — Send or verify OTP
+// POST /api/sms — Send or verify OTP via WhatsApp
 export async function POST(request: NextRequest) {
   try {
     const { action, phone, code } = await request.json();
@@ -14,15 +14,21 @@ export async function POST(request: NextRequest) {
 
       const otp = generateOTP(phone);
 
-      // Try sending SMS via Twilio; if not configured, return code in dev
       try {
-        await sendSMS(phone, `Your Rihan Heights verification code is: ${otp}`);
+        await sendWhatsApp(
+          phone,
+          `🏢 *Rihan Heights B701*\n\nYour verification code is: *${otp}*\n\nThis code expires in 5 minutes.`
+        );
       } catch (err) {
-        console.warn("SMS send failed (Twilio may not be configured):", err);
+        console.warn("WhatsApp OTP send failed:", err);
         // In development, return the code so the feature still works
         if (process.env.NODE_ENV === "development") {
           return NextResponse.json({ success: true, devCode: otp });
         }
+        return NextResponse.json(
+          { error: "Failed to send verification code. Make sure you've joined the WhatsApp sandbox." },
+          { status: 500 }
+        );
       }
 
       return NextResponse.json({ success: true });
