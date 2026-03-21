@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "./LanguageProvider";
-import PhoneVerification from "./PhoneVerification";
 
 const NATIONALITIES = [
   "Afghan", "Albanian", "Algerian", "American", "Andorran", "Angolan", "Argentine",
@@ -52,7 +51,6 @@ export default function BookingForm() {
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
-  const [phoneVerified, setPhoneVerified] = useState(false);
   const [recurrence, setRecurrence] = useState<Recurrence>("none");
 
   const [form, setForm] = useState({
@@ -71,8 +69,6 @@ export default function BookingForm() {
     if (errors[field as keyof FormErrors]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
-    // Reset phone verification if phone changes
-    if (field === "phone") setPhoneVerified(false);
   }
 
   function validate(): boolean {
@@ -116,11 +112,6 @@ export default function BookingForm() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!validate()) return;
-
-    if (!phoneVerified) {
-      setServerError("Please verify your phone number before submitting.");
-      return;
-    }
 
     setLoading(true);
     setServerError("");
@@ -192,11 +183,6 @@ export default function BookingForm() {
               {errors.phone && <p className="text-red-400 text-xs mt-1">{errors.phone}</p>}
             </div>
           </div>
-
-          {/* Phone OTP Verification */}
-          {form.phone && form.phone.replace(/\D/g, "").length >= 7 && (
-            <PhoneVerification phone={form.phone} onVerified={() => setPhoneVerified(true)} verified={phoneVerified} />
-          )}
 
           <div>
             <label htmlFor="nationality" className="block text-sm font-medium text-[var(--text-muted)] mb-1.5">
