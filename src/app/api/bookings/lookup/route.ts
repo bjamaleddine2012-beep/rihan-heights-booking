@@ -12,6 +12,9 @@ function publicBookingData(data: FirebaseFirestore.DocumentData) {
     arrivalStatus: data.arrivalStatus || "none",
     arrivalUpdatedAt: data.arrivalUpdatedAt || null,
     locationLink: data.locationLink || null,
+    latitude: data.latitude || null,
+    longitude: data.longitude || null,
+    locationSharingActive: data.locationSharingActive || false,
     createdAt: data.createdAt,
     statusUpdatedAt: data.statusUpdatedAt || null,
   };
@@ -74,8 +77,17 @@ export async function PATCH(request: NextRequest) {
     const updateData: Record<string, unknown> = {
       arrivalUpdatedAt: new Date().toISOString(),
     };
-    if (arrivalStatus) updateData.arrivalStatus = arrivalStatus;
+    if (arrivalStatus) {
+      updateData.arrivalStatus = arrivalStatus;
+      // Auto-stop location sharing when arrived
+      if (arrivalStatus === "arrived") {
+        updateData.locationSharingActive = false;
+      }
+    }
     if (locationLink !== undefined) updateData.locationLink = locationLink;
+    if (body.latitude !== undefined) updateData.latitude = body.latitude;
+    if (body.longitude !== undefined) updateData.longitude = body.longitude;
+    if (body.locationSharingActive !== undefined) updateData.locationSharingActive = body.locationSharingActive;
 
     await adminDb.collection("bookings").doc(doc.id).update(updateData);
 

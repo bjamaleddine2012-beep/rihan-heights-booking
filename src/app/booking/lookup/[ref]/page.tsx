@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, useRef, useCallback, use } from "react";
 import Link from "next/link";
 import StatusTimeline from "@/components/StatusTimeline";
 
@@ -14,14 +14,30 @@ interface BookingDetail {
   arrivalStatus: string;
   arrivalUpdatedAt?: string | null;
   locationLink?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  locationSharingActive?: boolean;
   createdAt: string;
   statusUpdatedAt?: string | null;
 }
 
+// Rihan Heights Tower B approximate coordinates
+const DESTINATION = { lat: 24.4539, lng: 54.3773 };
+
+function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371; // km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 const arrivalSteps = [
-  { key: "left-home", label: "Left Home", labelAr: "غادرت المنزل", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4" },
-  { key: "on-the-way", label: "On The Way", labelAr: "في الطريق", icon: "M13 10V3L4 14h7v7l9-11h-7z" },
-  { key: "arrived", label: "Arrived", labelAr: "وصلت", icon: "M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z" },
+  { key: "left-home", label: "Left Home", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4" },
+  { key: "on-the-way", label: "On The Way", icon: "M13 10V3L4 14h7v7l9-11h-7z" },
+  { key: "arrived", label: "Arrived", icon: "M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z" },
 ];
 
 export default function BookingDetailPage({ params }: { params: Promise<{ ref: string }> }) {
@@ -30,7 +46,12 @@ export default function BookingDetailPage({ params }: { params: Promise<{ ref: s
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [updatingArrival, setUpdatingArrival] = useState(false);
-  const [sharingLocation, setSharingLocation] = useState(false);
+
+  // Live location state
+  const [isTracking, setIsTracking] = useState(false);
+  const [currentPos, setCurrentPos] = useState<{ lat: number; lng: number } | null>(null);
+  const watchIdRef = useRef<number | null>(null);
+  const lastSentRef = useRef<number>(0);
 
   useEffect(() => {
     async function fetchBooking() {
@@ -38,16 +59,120 @@ export default function BookingDetailPage({ params }: { params: Promise<{ ref: s
         const res = await fetch(`/api/bookings/lookup?ref=${encodeURIComponent(ref)}`);
         if (res.status === 404) { setError("Booking not found."); return; }
         if (!res.ok) throw new Error("Failed to fetch");
-        setBooking(await res.json());
+        const data = await res.json();
+        setBooking(data);
+        // Restore tracking state if it was active
+        if (data.latitude && data.longitude) {
+          setCurrentPos({ lat: data.latitude, lng: data.longitude });
+        }
       } catch { setError("Something went wrong."); }
       finally { setLoading(false); }
     }
     fetchBooking();
   }, [ref]);
 
+  const sendLocationUpdate = useCallback(async (lat: number, lng: number, active: boolean) => {
+    if (!booking) return;
+    const locationLink = `https://www.google.com/maps?q=${lat},${lng}`;
+    try {
+      await fetch("/api/bookings/lookup", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          referenceNumber: booking.referenceNumber,
+          latitude: lat,
+          longitude: lng,
+          locationLink,
+          locationSharingActive: active,
+        }),
+      });
+      setBooking((prev) => prev ? { ...prev, latitude: lat, longitude: lng, locationLink, locationSharingActive: active } : null);
+    } catch {
+      // Silent fail for background updates
+    }
+  }, [booking]);
+
+  function startTracking() {
+    if (!navigator.geolocation) {
+      alert("Location sharing is not supported on this device.");
+      return;
+    }
+
+    setIsTracking(true);
+
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setCurrentPos({ lat: latitude, lng: longitude });
+
+        // Throttle server updates to every 10 seconds
+        const now = Date.now();
+        if (now - lastSentRef.current >= 10000) {
+          lastSentRef.current = now;
+          sendLocationUpdate(latitude, longitude, true);
+        }
+      },
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) {
+          alert("Location access denied. Please enable location in your browser settings.");
+          setIsTracking(false);
+        }
+      },
+      { enableHighAccuracy: true, maximumAge: 5000 }
+    );
+
+    watchIdRef.current = watchId;
+  }
+
+  function stopTracking() {
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+    setIsTracking(false);
+    // Send final update marking sharing as inactive
+    if (currentPos) {
+      sendLocationUpdate(currentPos.lat, currentPos.lng, false);
+    }
+  }
+
+  // Cleanup on unmount or page close
+  useEffect(() => {
+    function handleUnload() {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        // Use sendBeacon for reliable delivery on page close
+        if (booking && currentPos) {
+          const data = JSON.stringify({
+            referenceNumber: booking.referenceNumber,
+            latitude: currentPos.lat,
+            longitude: currentPos.lng,
+            locationLink: `https://www.google.com/maps?q=${currentPos.lat},${currentPos.lng}`,
+            locationSharingActive: false,
+          });
+          navigator.sendBeacon("/api/bookings/lookup", data);
+        }
+      }
+    }
+
+    window.addEventListener("beforeunload", handleUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleUnload);
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+      }
+    };
+  }, [booking, currentPos]);
+
   async function updateArrivalStatus(arrivalStatus: string) {
     if (!booking) return;
     setUpdatingArrival(true);
+
+    // Auto-stop tracking when arrived
+    if (arrivalStatus === "arrived" && isTracking) {
+      stopTracking();
+    }
+
     try {
       const res = await fetch("/api/bookings/lookup", {
         method: "PATCH",
@@ -66,38 +191,10 @@ export default function BookingDetailPage({ params }: { params: Promise<{ ref: s
     }
   }
 
-  async function shareLocation() {
-    if (!booking || !navigator.geolocation) {
-      alert("Location sharing is not supported on this device.");
-      return;
-    }
-
-    setSharingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        const locationLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
-
-        try {
-          await fetch("/api/bookings/lookup", {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ referenceNumber: booking.referenceNumber, locationLink }),
-          });
-          setBooking((prev) => prev ? { ...prev, locationLink } : null);
-        } catch {
-          alert("Failed to share location.");
-        } finally {
-          setSharingLocation(false);
-        }
-      },
-      () => {
-        alert("Location access denied. Please enable location in your browser settings.");
-        setSharingLocation(false);
-      },
-      { enableHighAccuracy: true }
-    );
-  }
+  // Computed values
+  const distance = currentPos
+    ? haversineDistance(currentPos.lat, currentPos.lng, DESTINATION.lat, DESTINATION.lng)
+    : null;
 
   if (loading) {
     return (
@@ -174,8 +271,6 @@ export default function BookingDetailPage({ params }: { params: Promise<{ ref: s
       {booking.status === "approved" && (
         <div className="glass-card p-6 mb-6">
           <h2 className="text-xs font-semibold text-gold uppercase tracking-[0.2em] mb-4">Your Booking Pass</h2>
-
-          {/* QR Code */}
           <div className="flex justify-center mb-4">
             <img
               src={`/api/bookings/qr?ref=${encodeURIComponent(booking.referenceNumber)}`}
@@ -186,8 +281,6 @@ export default function BookingDetailPage({ params }: { params: Promise<{ ref: s
             />
           </div>
           <p className="text-xs text-center text-[var(--text-muted)] mb-4">Show this QR code at arrival for quick check-in</p>
-
-          {/* Download buttons */}
           <div className="grid grid-cols-2 gap-3">
             <a
               href={`/api/bookings/qr?ref=${encodeURIComponent(booking.referenceNumber)}`}
@@ -253,27 +346,75 @@ export default function BookingDetailPage({ params }: { params: Promise<{ ref: s
             </p>
           )}
 
-          <button
-            onClick={shareLocation}
-            disabled={sharingLocation}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium border border-white/10 text-[var(--text-muted)] hover:bg-white/5 hover:text-white transition-all disabled:opacity-50"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            {sharingLocation ? "Getting location..." : booking.locationLink ? "Update My Location" : "Share My Live Location"}
-          </button>
-
-          {booking.locationLink && (
-            <div className="mt-3 flex items-center gap-2 text-xs">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-green-400">Location shared</span>
-              <a href={booking.locationLink} target="_blank" rel="noopener noreferrer" className="text-gold hover:underline ml-auto">
-                View on Maps
-              </a>
+          {/* Live Location Tracking */}
+          <div className="border-t border-white/5 pt-4 mt-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-medium text-white flex items-center gap-2">
+                Live Location
+                {isTracking && (
+                  <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-green-500/15 text-green-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                    Live
+                  </span>
+                )}
+              </h3>
+              {distance !== null && (
+                <span className="text-xs text-gold font-medium">
+                  {distance < 1 ? `${Math.round(distance * 1000)}m` : `${distance.toFixed(1)}km`} away
+                </span>
+              )}
             </div>
-          )}
+
+            {/* Map embed when tracking */}
+            {currentPos && (
+              <div className="rounded-xl overflow-hidden mb-4 border border-white/10">
+                <iframe
+                  src={`https://maps.google.com/maps?q=${currentPos.lat},${currentPos.lng}&z=15&output=embed`}
+                  className="w-full h-48"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Your live location"
+                />
+              </div>
+            )}
+
+            {!isTracking ? (
+              <button
+                onClick={startTracking}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium border border-white/10 text-[var(--text-muted)] hover:bg-white/5 hover:text-white transition-all"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                {currentPos ? "Resume Live Tracking" : "Start Live Tracking"}
+              </button>
+            ) : (
+              <button
+                onClick={stopTracking}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-all"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                </svg>
+                Stop Sharing Location
+              </button>
+            )}
+
+            {currentPos && (
+              <a
+                href={`https://www.google.com/maps?q=${currentPos.lat},${currentPos.lng}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-center text-xs text-gold hover:underline mt-2"
+              >
+                Open in Google Maps
+              </a>
+            )}
+          </div>
         </div>
       )}
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import type { Booking } from "@/lib/types";
 import StatusTimeline from "./StatusTimeline";
 
@@ -11,7 +12,52 @@ interface BookingDetailModalProps {
   updatingId: string | null;
 }
 
+// Rihan Heights Tower B approximate coordinates
+const DESTINATION = { lat: 24.4539, lng: 54.3773 };
+
+function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 export default function BookingDetailModal({ booking, onClose, onUpdateStatus, onDelete, updatingId }: BookingDetailModalProps) {
+  const [liveCoords, setLiveCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [isLive, setIsLive] = useState(false);
+
+  // Poll for live location updates every 10 seconds
+  useEffect(() => {
+    if (!booking || !booking.referenceNumber) return;
+
+    // Set initial coords from booking data
+    if (booking.latitude && booking.longitude) {
+      setLiveCoords({ lat: booking.latitude, lng: booking.longitude });
+      setIsLive(!!booking.locationSharingActive);
+    }
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/bookings/lookup?ref=${encodeURIComponent(booking.referenceNumber)}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.latitude && data.longitude) {
+          setLiveCoords({ lat: data.latitude, lng: data.longitude });
+          setIsLive(!!data.locationSharingActive);
+        } else {
+          setIsLive(false);
+        }
+      } catch {
+        // Silent fail
+      }
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [booking]);
+
   if (!booking) return null;
 
   const statusColors: Record<string, string> = {
@@ -19,6 +65,10 @@ export default function BookingDetailModal({ booking, onClose, onUpdateStatus, o
     approved: "bg-green-500/15 text-green-400",
     rejected: "bg-red-500/15 text-red-400",
   };
+
+  const distance = liveCoords
+    ? haversineDistance(liveCoords.lat, liveCoords.lng, DESTINATION.lat, DESTINATION.lng)
+    : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -51,7 +101,7 @@ export default function BookingDetailModal({ booking, onClose, onUpdateStatus, o
             <div><p className="text-[var(--text-muted)]">Date</p><p className="font-medium text-white">{booking.date}</p></div>
             <div><p className="text-[var(--text-muted)]">Time</p><p className="font-medium text-white">{booking.time}</p></div>
             <div><p className="text-[var(--text-muted)]">Guests</p><p className="font-medium text-white">{booking.guests || 1}</p></div>
-            <div><p className="text-[var(--text-muted)]">Submitted</p><p className="font-medium text-white">{new Date(booking.createdAt).toLocaleDateString()}</p></div>
+            <div><p className="text-[var(--text-muted)]">Nationality</p><p className="font-medium text-white">{booking.nationality || "—"}</p></div>
           </div>
 
           {booking.message && (
@@ -61,8 +111,53 @@ export default function BookingDetailModal({ booking, onClose, onUpdateStatus, o
             </div>
           )}
 
+          {/* Live Location Map */}
+          {liveCoords && (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm text-[var(--text-muted)] flex items-center gap-2">
+                  Guest Location
+                  {isLive && (
+                    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-green-500/15 text-green-400">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                      Live
+                    </span>
+                  )}
+                </p>
+                {distance !== null && (
+                  <span className="text-xs font-medium text-gold">
+                    {distance < 1 ? `${Math.round(distance * 1000)}m` : `${distance.toFixed(1)}km`} away
+                  </span>
+                )}
+              </div>
+              <div className="rounded-xl overflow-hidden border border-white/10">
+                <iframe
+                  key={`${liveCoords.lat}-${liveCoords.lng}`}
+                  src={`https://maps.google.com/maps?q=${liveCoords.lat},${liveCoords.lng}&z=15&output=embed`}
+                  className="w-full h-48"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Guest live location"
+                />
+              </div>
+              <a
+                href={`https://www.google.com/maps?q=${liveCoords.lat},${liveCoords.lng}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 mt-2 text-xs text-gold hover:underline"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+                Open in Google Maps
+              </a>
+            </div>
+          )}
+
           {/* Arrival status */}
-          {booking.arrivalStatus && booking.arrivalStatus !== "none" && (
+          {booking.arrivalStatus && booking.arrivalStatus !== "none" && !liveCoords && (
             <div>
               <p className="text-sm text-[var(--text-muted)] mb-2">Arrival Status</p>
               <div className="flex items-center gap-3">
@@ -81,7 +176,7 @@ export default function BookingDetailModal({ booking, onClose, onUpdateStatus, o
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  View Live Location
+                  View Last Known Location
                 </a>
               )}
             </div>

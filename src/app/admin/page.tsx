@@ -190,6 +190,12 @@ export default function AdminPage() {
                   {booking.message && <p className="text-sm text-[var(--text-muted)] truncate">{booking.message}</p>}
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-xs text-[var(--navy-mid)]">Submitted: {new Date(booking.createdAt).toLocaleString()}</p>
+                    {booking.locationSharingActive && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-500/15 text-green-400">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                        Live
+                      </span>
+                    )}
                     {booking.arrivalStatus && booking.arrivalStatus !== "none" && (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gold/15 text-gold">
                         <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />

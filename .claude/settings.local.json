@@ -38,7 +38,12 @@
       "Bash(curl -s https://task-management-nine-pearl.vercel.app/api/me)",
       "Bash(ls /c/Users/bjama/AppData/Roaming/nvm/*/node.exe)",
       "Read(//c/Program Files/**)",
-      "Bash(curl -s http://localhost:3000)"
+      "Bash(curl -s http://localhost:3000)",
+      "Bash(curl -s http://localhost:3000/manifest.json)",
+      "Bash(curl -s http://localhost:3000/sw.js)",
+      "Bash(curl -s http://localhost:3000/booking/lookup/TEST-REF)",
+      "Bash(curl -s http://localhost:3000/admin)",
+      "Bash(curl -s -X PATCH http://localhost:3000/api/bookings/lookup -H \"Content-Type: application/json\" -d '{\"\"referenceNumber\"\":\"\"TEST\"\",\"\"latitude\"\":24.45,\"\"longitude\"\":54.37,\"\"locationSharingActive\"\":true}')"
     ]
   }
 }

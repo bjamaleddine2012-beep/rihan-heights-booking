@@ -15,6 +15,9 @@ export interface Booking {
   arrivalStatus?: "none" | "left-home" | "on-the-way" | "arrived";
   arrivalUpdatedAt?: string;
   locationLink?: string;
+  latitude?: number;
+  longitude?: number;
+  locationSharingActive?: boolean;
   createdAt: string;
   statusUpdatedAt?: string;
 }
