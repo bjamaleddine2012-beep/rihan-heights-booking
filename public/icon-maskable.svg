@@ -1,5 +1,33 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#0f172a"/>
-  <text x="256" y="280" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="180" font-weight="700" fill="#d4a853">RH</text>
-  <text x="256" y="370" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="56" font-weight="400" fill="#94a3b8">B701</text>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f5e6c8"/>
+      <stop offset="100%" stop-color="#b8860b"/>
+    </linearGradient>
+  </defs>
+  <!-- Full bleed background for maskable -->
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <!-- Tower building (centered in safe zone) -->
+  <g transform="translate(256, 230)" fill="url(#gold)">
+    <rect x="-36" y="-120" width="72" height="164" rx="3"/>
+    <polygon points="-28,-120 28,-120 18,-148 -18,-148"/>
+    <rect x="-4" y="-164" width="8" height="18" rx="2"/>
+    <rect x="-24" y="-106" width="14" height="10" rx="1.5" fill="#0f172a" opacity="0.5"/>
+    <rect x="10" y="-106" width="14" height="10" rx="1.5" fill="#0f172a" opacity="0.5"/>
+    <rect x="-24" y="-86" width="14" height="10" rx="1.5" fill="#0f172a" opacity="0.5"/>
+    <rect x="10" y="-86" width="14" height="10" rx="1.5" fill="#0f172a" opacity="0.5"/>
+    <rect x="-24" y="-66" width="14" height="10" rx="1.5" fill="#0f172a" opacity="0.5"/>
+    <rect x="10" y="-66" width="14" height="10" rx="1.5" fill="#0f172a" opacity="0.5"/>
+    <rect x="-24" y="-46" width="14" height="10" rx="1.5" fill="#0f172a" opacity="0.5"/>
+    <rect x="10" y="-46" width="14" height="10" rx="1.5" fill="#0f172a" opacity="0.5"/>
+    <rect x="-82" y="-72" width="40" height="116" rx="3"/>
+    <rect x="42" y="-72" width="40" height="116" rx="3"/>
+    <rect x="-96" y="44" width="192" height="3" rx="1.5" opacity="0.3"/>
+  </g>
+  <text x="256" y="400" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="600" letter-spacing="6" fill="#d4a853">RIHAN</text>
+  <text x="256" y="436" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="400" letter-spacing="4" fill="#94a3b8">HEIGHTS B701</text>
 </svg>
