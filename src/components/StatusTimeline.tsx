@@ -13,8 +13,9 @@ const steps = [
 ];
 
 export default function StatusTimeline({ status, createdAt, statusUpdatedAt }: StatusTimelineProps) {
-  const currentStep = status === "pending" ? 1 : 2;
-  const finalLabel = status === "approved" ? "Approved" : status === "rejected" ? "Rejected" : "Decision";
+  const isEnded = status === "ended";
+  const currentStep = isEnded ? 2 : status === "pending" ? 1 : 2;
+  const finalLabel = isEnded ? "Appointment Ended" : status === "approved" ? "Approved" : status === "rejected" ? "Rejected" : "Decision";
 
   return (
     <div className="space-y-0">
@@ -44,6 +45,10 @@ export default function StatusTimeline({ status, createdAt, statusUpdatedAt }: S
         if (isFinal && status === "rejected") {
           dotColor = "bg-red-500";
           textColor = "text-red-400";
+        }
+        if (isFinal && isEnded) {
+          dotColor = "bg-gray-500";
+          textColor = "text-gray-400";
         }
 
         if (index === 0 && createdAt) timestamp = new Date(createdAt).toLocaleString();

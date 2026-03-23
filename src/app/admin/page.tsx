@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import type { Booking } from "@/lib/types";
+import { getDisplayStatus } from "@/lib/booking-utils";
 import StatsCards from "@/components/StatsCards";
 import BookingDetailModal from "@/components/BookingDetailModal";
 
@@ -92,6 +93,7 @@ export default function AdminPage() {
     pending: "bg-yellow-500/15 text-yellow-400",
     approved: "bg-green-500/15 text-green-400",
     rejected: "bg-red-500/15 text-red-400",
+    ended: "bg-gray-500/15 text-gray-400",
   };
 
   // --- Login ---
@@ -178,8 +180,10 @@ export default function AdminPage() {
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div className="space-y-1 flex-1 min-w-0">
                   <div className="flex items-center gap-3 flex-wrap">
+                    {(() => { const ds = getDisplayStatus(booking.status, booking.date, booking.time); return (<>
                     <h3 className="font-semibold text-lg text-white">{booking.name}</h3>
-                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[booking.status] || ""}`}>{booking.status}</span>
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[ds] || statusColors[booking.status] || ""}`}>{ds}</span>
+                    </>); })()}
                     {booking.referenceNumber && <span className="font-mono text-xs text-[var(--text-muted)]">{booking.referenceNumber}</span>}
                   </div>
                   <p className="text-sm text-[var(--text-muted)]">{booking.email} &middot; {booking.phone}{booking.nationality && <> &middot; {booking.nationality}</>}</p>
@@ -211,7 +215,7 @@ export default function AdminPage() {
                 </div>
 
                 <div className="flex gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
-                  {booking.status === "pending" && (
+                  {booking.status === "pending" && getDisplayStatus(booking.status, booking.date, booking.time) !== "ended" && (
                     <>
                       <button onClick={() => updateStatus(booking.id, "approved")} disabled={updatingId === booking.id}
                         className="bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors">

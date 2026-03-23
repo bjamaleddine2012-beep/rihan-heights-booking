@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import type { Booking } from "@/lib/types";
+import { getDisplayStatus } from "@/lib/booking-utils";
 import StatusTimeline from "./StatusTimeline";
 
 interface BookingDetailModalProps {
@@ -60,10 +61,13 @@ export default function BookingDetailModal({ booking, onClose, onUpdateStatus, o
 
   if (!booking) return null;
 
+  const displayStatus = getDisplayStatus(booking.status, booking.date, booking.time);
+
   const statusColors: Record<string, string> = {
     pending: "bg-yellow-500/15 text-yellow-400",
     approved: "bg-green-500/15 text-green-400",
     rejected: "bg-red-500/15 text-red-400",
+    ended: "bg-gray-500/15 text-gray-400",
   };
 
   const distance = liveCoords
@@ -92,7 +96,7 @@ export default function BookingDetailModal({ booking, onClose, onUpdateStatus, o
         <div className="p-6 space-y-6">
           <div className="flex items-center gap-2">
             <span className="text-sm text-[var(--text-muted)]">Status:</span>
-            <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[booking.status] || ""}`}>{booking.status}</span>
+            <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[displayStatus] || ""}`}>{displayStatus}</span>
           </div>
 
           <div className="grid grid-cols-2 gap-4 text-sm">
@@ -184,13 +188,13 @@ export default function BookingDetailModal({ booking, onClose, onUpdateStatus, o
 
           <div>
             <p className="text-sm text-[var(--text-muted)] mb-3">Timeline</p>
-            <StatusTimeline status={booking.status} createdAt={booking.createdAt} statusUpdatedAt={booking.statusUpdatedAt} />
+            <StatusTimeline status={displayStatus} createdAt={booking.createdAt} statusUpdatedAt={booking.statusUpdatedAt} />
           </div>
         </div>
 
         {/* Footer */}
         <div className="flex gap-3 p-6 border-t border-white/5">
-          {booking.status === "pending" && (
+          {booking.status === "pending" && displayStatus !== "ended" && (
             <>
               <button onClick={() => onUpdateStatus(booking.id, "approved")} disabled={updatingId === booking.id}
                 className="flex-1 bg-green-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors">

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback, use } from "react";
 import Link from "next/link";
 import StatusTimeline from "@/components/StatusTimeline";
+import { getDisplayStatus } from "@/lib/booking-utils";
 
 interface BookingDetail {
   referenceNumber: string;
@@ -220,16 +221,20 @@ export default function BookingDetailPage({ params }: { params: Promise<{ ref: s
     );
   }
 
+  const displayStatus = getDisplayStatus(booking.status, booking.date, booking.time);
+
   const statusMessage: Record<string, string> = {
     pending: "Your booking is being reviewed. You\u2019ll receive an email when it\u2019s confirmed.",
     approved: `Your booking is confirmed! See you on ${booking.date} at ${booking.time}.`,
     rejected: "Unfortunately this booking couldn\u2019t be accommodated. You can submit a new booking.",
+    ended: "This appointment has ended. Thank you for visiting!",
   };
 
   const statusBg: Record<string, string> = {
     pending: "bg-yellow-500/10 border-yellow-500/20 text-yellow-400",
     approved: "bg-green-500/10 border-green-500/20 text-green-400",
     rejected: "bg-red-500/10 border-red-500/20 text-red-400",
+    ended: "bg-gray-500/10 border-gray-500/20 text-gray-400",
   };
 
   const currentArrival = booking.arrivalStatus || "none";
@@ -259,16 +264,16 @@ export default function BookingDetailPage({ params }: { params: Promise<{ ref: s
       {/* Timeline */}
       <div className="glass-card p-6 mb-6">
         <h2 className="text-xs font-semibold text-gold uppercase tracking-[0.2em] mb-4">Status</h2>
-        <StatusTimeline status={booking.status} createdAt={booking.createdAt} statusUpdatedAt={booking.statusUpdatedAt} />
+        <StatusTimeline status={displayStatus} createdAt={booking.createdAt} statusUpdatedAt={booking.statusUpdatedAt} />
       </div>
 
       {/* Status message */}
-      <div className={`rounded-xl border px-4 py-3 text-sm ${statusBg[booking.status] || ""} mb-6`}>
-        {statusMessage[booking.status]}
+      <div className={`rounded-xl border px-4 py-3 text-sm ${statusBg[displayStatus] || statusBg[booking.status] || ""} mb-6`}>
+        {statusMessage[displayStatus] || statusMessage[booking.status]}
       </div>
 
-      {/* QR Code + Calendar — only for approved bookings */}
-      {booking.status === "approved" && (
+      {/* QR Code + Calendar — only for approved bookings that haven't ended */}
+      {booking.status === "approved" && displayStatus !== "ended" && (
         <div className="glass-card p-6 mb-6">
           <h2 className="text-xs font-semibold text-gold uppercase tracking-[0.2em] mb-4">Your Booking Pass</h2>
           <div className="flex justify-center mb-4">
@@ -306,8 +311,8 @@ export default function BookingDetailPage({ params }: { params: Promise<{ ref: s
         </div>
       )}
 
-      {/* Arrival Tracking — only for approved bookings */}
-      {booking.status === "approved" && (
+      {/* Arrival Tracking — only for approved bookings that haven't ended */}
+      {booking.status === "approved" && displayStatus !== "ended" && (
         <div className="glass-card p-6 mb-6">
           <h2 className="text-xs font-semibold text-gold uppercase tracking-[0.2em] mb-4">Arrival Tracking</h2>
           <p className="text-sm text-[var(--text-muted)] mb-4">Let us know when you&apos;re on your way!</p>
