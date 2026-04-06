@@ -4,29 +4,11 @@ import { sendAdminNotification, sendBookingConfirmationEmail } from "@/lib/email
 import { generateReferenceNumber } from "@/lib/reference";
 import { sendBookingWhatsApp, sendAdminWhatsApp } from "@/lib/twilio";
 
-function addDays(dateStr: string, days: number): string {
-  const d = new Date(dateStr);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
-}
-
-function getRecurrenceDates(startDate: string, recurrence: string, count: number = 4): string[] {
-  const dates: string[] = [];
-  const intervals: Record<string, number> = { weekly: 7, biweekly: 14, monthly: 30 };
-  const interval = intervals[recurrence];
-  if (!interval) return [];
-
-  for (let i = 1; i < count; i++) {
-    dates.push(addDays(startDate, interval * i));
-  }
-  return dates;
-}
-
-// POST /api/bookings — Create a new booking (with optional recurrence)
+// POST /api/bookings — Create a new booking
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, phone, nationality, date, time, guests, message, recurrence } = body;
+    const { name, email, phone, nationality, date, time, guests, message, service } = body;
 
     if (!name || !email || !phone || !date || !time) {
       return NextResponse.json(
@@ -35,7 +17,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create the main booking
+    // Check if the time slot is still available
+    const existingSnap = await adminDb
+      .collection("bookings")
+      .where("date", "==", date)
+      .where("time", "==", time)
+      .where("status", "in", ["pending", "approved"])
+      .get();
+
+    if (!existingSnap.empty) {
+      return NextResponse.json(
+        { error: "This time slot is already booked. Please choose another time." },
+        { status: 409 }
+      );
+    }
+
     const mainRef = generateReferenceNumber();
     const bookingData = {
       referenceNumber: mainRef,
@@ -47,27 +43,12 @@ export async function POST(request: NextRequest) {
       time,
       guests: Number(guests) || 1,
       message: message || "",
-      recurrence: recurrence || "none",
+      service: service || "other",
       status: "pending",
       createdAt: new Date().toISOString(),
     };
 
     const docRef = await adminDb.collection("bookings").add(bookingData);
-
-    // Create recurring bookings if applicable
-    if (recurrence && recurrence !== "none") {
-      const extraDates = getRecurrenceDates(date, recurrence);
-      for (const extraDate of extraDates) {
-        const recurringData = {
-          ...bookingData,
-          referenceNumber: generateReferenceNumber(),
-          date: extraDate,
-          parentBookingId: docRef.id,
-          createdAt: new Date().toISOString(),
-        };
-        await adminDb.collection("bookings").add(recurringData);
-      }
-    }
 
     // Send email notifications (non-blocking)
     sendAdminNotification({ id: docRef.id, ...bookingData }).catch((err) =>

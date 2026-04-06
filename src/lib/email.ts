@@ -15,6 +15,7 @@ export interface BookingData {
   time: string;
   guests: number;
   message: string;
+  service: string;
   status: string;
 }
 
@@ -130,6 +131,44 @@ export async function sendStatusUpdateEmail(booking: BookingData) {
         ? '<p style="color: #6b7280;">We look forward to seeing you! If you need to make changes, please contact us.</p>'
         : '<p style="color: #6b7280;">Unfortunately, we are unable to accommodate your request at this time. Please feel free to submit a new booking for a different date.</p>'
       }
+
+      <div style="text-align: center; margin-top: 24px;">
+        <a href="${appUrl}/booking/lookup/${booking.referenceNumber}" style="display: inline-block; background: #1e40af; color: white; padding: 12px 32px; text-decoration: none; border-radius: 8px; font-weight: 600;">
+          View Booking Details
+        </a>
+      </div>
+    `),
+  });
+}
+
+/** Notify user that their booking has been rescheduled */
+export async function sendRescheduleEmail(booking: BookingData, oldDate: string, oldTime: string) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+  await resend.emails.send({
+    from: FROM_EMAIL,
+    to: booking.email,
+    subject: `Booking ${booking.referenceNumber} — Rescheduled`,
+    html: emailWrapper(`
+      <div style="text-align: center; margin-bottom: 24px;">
+        <div style="display: inline-block; background: #fef3c7; padding: 8px 24px; border-radius: 24px;">
+          <span style="color: #d97706; font-weight: 700; font-size: 18px;">Rescheduled</span>
+        </div>
+      </div>
+
+      <p style="color: #374151;">Hi ${booking.name},</p>
+      <p style="color: #6b7280;">Your booking <strong style="font-family: monospace;">${booking.referenceNumber}</strong> has been rescheduled.</p>
+
+      <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+        <tr>
+          <td style="padding: 10px 8px; font-weight: 600; color: #374151; border-bottom: 1px solid #f3f4f6;">Previous</td>
+          <td style="padding: 10px 8px; border-bottom: 1px solid #f3f4f6; text-decoration: line-through; color: #9ca3af;">${oldDate} at ${oldTime}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 8px; font-weight: 600; color: #374151;">New</td>
+          <td style="padding: 10px 8px; font-weight: 600; color: #1e40af;">${booking.date} at ${booking.time}</td>
+        </tr>
+      </table>
 
       <div style="text-align: center; margin-top: 24px;">
         <a href="${appUrl}/booking/lookup/${booking.referenceNumber}" style="display: inline-block; background: #1e40af; color: white; padding: 12px 32px; text-decoration: none; border-radius: 8px; font-weight: 600;">

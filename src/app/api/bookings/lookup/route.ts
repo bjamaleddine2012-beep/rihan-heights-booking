@@ -8,13 +8,12 @@ function publicBookingData(data: FirebaseFirestore.DocumentData) {
     date: data.date,
     time: data.time,
     guests: data.guests || 1,
+    service: data.service || "visit",
     status: data.status,
     arrivalStatus: data.arrivalStatus || "none",
     arrivalUpdatedAt: data.arrivalUpdatedAt || null,
     locationLink: data.locationLink || null,
-    latitude: data.latitude || null,
-    longitude: data.longitude || null,
-    locationSharingActive: data.locationSharingActive || false,
+    rescheduledFrom: data.rescheduledFrom || null,
     createdAt: data.createdAt,
     statusUpdatedAt: data.statusUpdatedAt || null,
   };
@@ -58,7 +57,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Reference number is required" }, { status: 400 });
     }
 
-    const validStatuses = ["none", "left-home", "on-the-way", "arrived"];
+    const validStatuses = ["none", "on-the-way", "arrived"];
     if (arrivalStatus && !validStatuses.includes(arrivalStatus)) {
       return NextResponse.json({ error: "Invalid arrival status" }, { status: 400 });
     }
@@ -79,15 +78,8 @@ export async function PATCH(request: NextRequest) {
     };
     if (arrivalStatus) {
       updateData.arrivalStatus = arrivalStatus;
-      // Auto-stop location sharing when arrived
-      if (arrivalStatus === "arrived") {
-        updateData.locationSharingActive = false;
-      }
     }
     if (locationLink !== undefined) updateData.locationLink = locationLink;
-    if (body.latitude !== undefined) updateData.latitude = body.latitude;
-    if (body.longitude !== undefined) updateData.longitude = body.longitude;
-    if (body.locationSharingActive !== undefined) updateData.locationSharingActive = body.locationSharingActive;
 
     await adminDb.collection("bookings").doc(doc.id).update(updateData);
 

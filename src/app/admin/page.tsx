@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import type { Booking } from "@/lib/types";
 import { getDisplayStatus } from "@/lib/booking-utils";
+import { getServiceName } from "@/lib/services";
 import StatsCards from "@/components/StatsCards";
 import BookingDetailModal from "@/components/BookingDetailModal";
 
@@ -119,6 +120,9 @@ export default function AdminPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h1 className="text-2xl font-bold text-white">Booking Dashboard</h1>
         <div className="flex gap-2">
+          <a href="/admin/calendar" className="text-sm px-4 py-2 rounded-xl border border-gold/30 text-gold hover:bg-gold/10 transition-colors">
+            Calendar
+          </a>
           <a href="/admin/analytics" className="text-sm px-4 py-2 rounded-xl border border-gold/30 text-gold hover:bg-gold/10 transition-colors">
             Analytics
           </a>
@@ -190,26 +194,16 @@ export default function AdminPage() {
                   <p className="text-sm text-[var(--text-muted)]">
                     {booking.date} at {booking.time}
                     {booking.guests && booking.guests > 1 && <> &middot; {booking.guests} guests</>}
+                    {booking.service && <> &middot; {getServiceName(booking.service, "en")}</>}
                   </p>
                   {booking.message && <p className="text-sm text-[var(--text-muted)] truncate">{booking.message}</p>}
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-xs text-[var(--navy-mid)]">Submitted: {new Date(booking.createdAt).toLocaleString()}</p>
-                    {booking.locationSharingActive && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-500/15 text-green-400">
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                        Live
-                      </span>
-                    )}
                     {booking.arrivalStatus && booking.arrivalStatus !== "none" && (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gold/15 text-gold">
                         <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
-                        {booking.arrivalStatus === "left-home" ? "Left Home" : booking.arrivalStatus === "on-the-way" ? "On The Way" : "Arrived"}
+                        {booking.arrivalStatus === "on-the-way" ? "On The Way" : "Arrived"}
                       </span>
-                    )}
-                    {booking.locationLink && (
-                      <a href={booking.locationLink} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-xs text-blue-400 hover:underline">
-                        View Location
-                      </a>
                     )}
                   </div>
                 </div>
@@ -240,7 +234,18 @@ export default function AdminPage() {
         </div>
       )}
 
-      <BookingDetailModal booking={selectedBooking} onClose={() => setSelectedBooking(null)} onUpdateStatus={updateStatus} onDelete={deleteBooking} updatingId={updatingId} />
+      <BookingDetailModal
+        booking={selectedBooking}
+        onClose={() => setSelectedBooking(null)}
+        onUpdateStatus={updateStatus}
+        onDelete={deleteBooking}
+        onBookingUpdated={(id, updates) => {
+          setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, ...updates } : b)));
+          setSelectedBooking((prev) => (prev && prev.id === id ? { ...prev, ...updates } : prev));
+        }}
+        updatingId={updatingId}
+        adminPassword={password}
+      />
     </div>
   );
 }

@@ -43,7 +43,8 @@
       "Bash(curl -s http://localhost:3000/sw.js)",
       "Bash(curl -s http://localhost:3000/booking/lookup/TEST-REF)",
       "Bash(curl -s http://localhost:3000/admin)",
-      "Bash(curl -s -X PATCH http://localhost:3000/api/bookings/lookup -H \"Content-Type: application/json\" -d '{\"\"referenceNumber\"\":\"\"TEST\"\",\"\"latitude\"\":24.45,\"\"longitude\"\":54.37,\"\"locationSharingActive\"\":true}')"
+      "Bash(curl -s -X PATCH http://localhost:3000/api/bookings/lookup -H \"Content-Type: application/json\" -d '{\"\"referenceNumber\"\":\"\"TEST\"\",\"\"latitude\"\":24.45,\"\"longitude\"\":54.37,\"\"locationSharingActive\"\":true}')",
+      "Bash(npx tsc:*)"
     ]
   }
 }

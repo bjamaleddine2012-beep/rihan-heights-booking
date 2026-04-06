@@ -9,15 +9,13 @@ export interface Booking {
   time: string;
   guests: number;
   message: string;
+  service: string;
   status: "pending" | "approved" | "rejected";
-  recurrence?: "none" | "weekly" | "biweekly" | "monthly";
-  parentBookingId?: string;
-  arrivalStatus?: "none" | "left-home" | "on-the-way" | "arrived";
+  arrivalStatus?: "none" | "on-the-way" | "arrived";
   arrivalUpdatedAt?: string;
   locationLink?: string;
-  latitude?: number;
-  longitude?: number;
-  locationSharingActive?: boolean;
+  adminNotes?: string;
+  rescheduledFrom?: { date: string; time: string };
   createdAt: string;
   statusUpdatedAt?: string;
 }

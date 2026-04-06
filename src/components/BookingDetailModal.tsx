@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import type { Booking } from "@/lib/types";
 import { getDisplayStatus } from "@/lib/booking-utils";
+import { getServiceName, getServiceById } from "@/lib/services";
 import StatusTimeline from "./StatusTimeline";
 
 interface BookingDetailModalProps {
@@ -10,54 +11,39 @@ interface BookingDetailModalProps {
   onClose: () => void;
   onUpdateStatus: (id: string, status: "approved" | "rejected") => void;
   onDelete: (id: string) => void;
+  onBookingUpdated?: (id: string, updates: Partial<Booking>) => void;
   updatingId: string | null;
+  adminPassword: string;
 }
 
-// Rihan Heights Tower B approximate coordinates
-const DESTINATION = { lat: 24.4539, lng: 54.3773 };
+export default function BookingDetailModal({
+  booking,
+  onClose,
+  onUpdateStatus,
+  onDelete,
+  onBookingUpdated,
+  updatingId,
+  adminPassword,
+}: BookingDetailModalProps) {
+  // Admin notes state
+  const [notes, setNotes] = useState(booking?.adminNotes || "");
+  const [savingNotes, setSavingNotes] = useState(false);
+  const [notesSaved, setNotesSaved] = useState(false);
 
-function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
+  // Reschedule state
+  const [showReschedule, setShowReschedule] = useState(false);
+  const [newDate, setNewDate] = useState("");
+  const [newTime, setNewTime] = useState("");
+  const [rescheduling, setRescheduling] = useState(false);
 
-export default function BookingDetailModal({ booking, onClose, onUpdateStatus, onDelete, updatingId }: BookingDetailModalProps) {
-  const [liveCoords, setLiveCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [isLive, setIsLive] = useState(false);
-
-  // Poll for live location updates every 10 seconds
+  // Reset notes when booking changes
   useEffect(() => {
-    if (!booking || !booking.referenceNumber) return;
-
-    // Set initial coords from booking data
-    if (booking.latitude && booking.longitude) {
-      setLiveCoords({ lat: booking.latitude, lng: booking.longitude });
-      setIsLive(!!booking.locationSharingActive);
-    }
-
-    const interval = setInterval(async () => {
-      try {
-        const res = await fetch(`/api/bookings/lookup?ref=${encodeURIComponent(booking.referenceNumber)}`);
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data.latitude && data.longitude) {
-          setLiveCoords({ lat: data.latitude, lng: data.longitude });
-          setIsLive(!!data.locationSharingActive);
-        } else {
-          setIsLive(false);
-        }
-      } catch {
-        // Silent fail
-      }
-    }, 10000);
-
-    return () => clearInterval(interval);
-  }, [booking]);
+    setNotes(booking?.adminNotes || "");
+    setNotesSaved(false);
+    setShowReschedule(false);
+    setNewDate("");
+    setNewTime("");
+  }, [booking?.id]);
 
   if (!booking) return null;
 
@@ -70,9 +56,64 @@ export default function BookingDetailModal({ booking, onClose, onUpdateStatus, o
     ended: "bg-gray-500/15 text-gray-400",
   };
 
-  const distance = liveCoords
-    ? haversineDistance(liveCoords.lat, liveCoords.lng, DESTINATION.lat, DESTINATION.lng)
-    : null;
+  const service = booking.service ? getServiceById(booking.service) : null;
+  const serviceName = booking.service ? getServiceName(booking.service, "en") : null;
+
+  const notesChanged = notes !== (booking.adminNotes || "");
+
+  const handleSaveNotes = async () => {
+    setSavingNotes(true);
+    setNotesSaved(false);
+    try {
+      const res = await fetch(`/api/bookings/${booking.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": adminPassword,
+        },
+        body: JSON.stringify({ adminNotes: notes }),
+      });
+      if (res.ok) {
+        setNotesSaved(true);
+        if (onBookingUpdated) {
+          onBookingUpdated(booking.id, { adminNotes: notes });
+        }
+        setTimeout(() => setNotesSaved(false), 2000);
+      }
+    } catch {
+      // Silent fail
+    } finally {
+      setSavingNotes(false);
+    }
+  };
+
+  const handleReschedule = async () => {
+    if (!newDate || !newTime) return;
+    setRescheduling(true);
+    try {
+      const res = await fetch(`/api/bookings/${booking.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": adminPassword,
+        },
+        body: JSON.stringify({ date: newDate, time: newTime }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (onBookingUpdated) {
+          onBookingUpdated(booking.id, data);
+        }
+        setShowReschedule(false);
+        setNewDate("");
+        setNewTime("");
+      }
+    } catch {
+      // Silent fail
+    } finally {
+      setRescheduling(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -106,7 +147,32 @@ export default function BookingDetailModal({ booking, onClose, onUpdateStatus, o
             <div><p className="text-[var(--text-muted)]">Time</p><p className="font-medium text-white">{booking.time}</p></div>
             <div><p className="text-[var(--text-muted)]">Guests</p><p className="font-medium text-white">{booking.guests || 1}</p></div>
             <div><p className="text-[var(--text-muted)]">Nationality</p><p className="font-medium text-white">{booking.nationality || "—"}</p></div>
+            {serviceName && (
+              <div className="col-span-2">
+                <p className="text-[var(--text-muted)]">Service</p>
+                <p className="font-medium text-white flex items-center gap-2">
+                  {service && (
+                    <svg className="w-4 h-4 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={service.icon} />
+                    </svg>
+                  )}
+                  {serviceName}
+                </p>
+              </div>
+            )}
           </div>
+
+          {/* Rescheduled From info */}
+          {booking.rescheduledFrom && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+              <svg className="w-4 h-4 text-yellow-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="text-xs text-yellow-400">
+                Rescheduled from {booking.rescheduledFrom.date} at {booking.rescheduledFrom.time}
+              </span>
+            </div>
+          )}
 
           {booking.message && (
             <div>
@@ -115,59 +181,43 @@ export default function BookingDetailModal({ booking, onClose, onUpdateStatus, o
             </div>
           )}
 
-          {/* Live Location Map */}
-          {liveCoords && (
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-[var(--text-muted)] flex items-center gap-2">
-                  Guest Location
-                  {isLive && (
-                    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-green-500/15 text-green-400">
-                      <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                      Live
-                    </span>
-                  )}
-                </p>
-                {distance !== null && (
-                  <span className="text-xs font-medium text-gold">
-                    {distance < 1 ? `${Math.round(distance * 1000)}m` : `${distance.toFixed(1)}km`} away
-                  </span>
-                )}
-              </div>
-              <div className="rounded-xl overflow-hidden border border-white/10">
-                <iframe
-                  key={`${liveCoords.lat}-${liveCoords.lng}`}
-                  src={`https://maps.google.com/maps?q=${liveCoords.lat},${liveCoords.lng}&z=15&output=embed`}
-                  className="w-full h-48"
-                  style={{ border: 0 }}
-                  allowFullScreen
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  title="Guest live location"
-                />
-              </div>
-              <a
-                href={`https://www.google.com/maps?q=${liveCoords.lat},${liveCoords.lng}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 mt-2 text-xs text-gold hover:underline"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-                Open in Google Maps
-              </a>
+          {/* Admin Notes */}
+          <div>
+            <p className="text-sm text-[var(--text-muted)] mb-2">Admin Notes</p>
+            <textarea
+              value={notes}
+              onChange={(e) => {
+                setNotes(e.target.value);
+                setNotesSaved(false);
+              }}
+              placeholder="Add private notes..."
+              rows={3}
+              className="input-dark w-full resize-none text-sm"
+            />
+            <div className="flex items-center gap-2 mt-2">
+              {notesChanged && (
+                <button
+                  onClick={handleSaveNotes}
+                  disabled={savingNotes}
+                  className="btn-gold px-4 py-1.5 text-xs font-medium rounded-lg disabled:opacity-50 transition-colors"
+                >
+                  {savingNotes ? "Saving..." : "Save Notes"}
+                </button>
+              )}
+              {notesSaved && (
+                <span className="text-xs text-green-400 font-medium">Saved!</span>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Arrival status */}
-          {booking.arrivalStatus && booking.arrivalStatus !== "none" && !liveCoords && (
+          {booking.arrivalStatus && booking.arrivalStatus !== "none" && (
             <div>
               <p className="text-sm text-[var(--text-muted)] mb-2">Arrival Status</p>
               <div className="flex items-center gap-3">
                 <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium bg-gold/15 text-gold">
                   <span className="w-2 h-2 rounded-full bg-gold animate-pulse" />
-                  {booking.arrivalStatus === "left-home" ? "Left Home" : booking.arrivalStatus === "on-the-way" ? "On The Way" : "Arrived"}
+                  {booking.arrivalStatus === "on-the-way" ? "On The Way" : "Arrived"}
                 </span>
                 {booking.arrivalUpdatedAt && (
                   <span className="text-xs text-[var(--text-muted)]">{new Date(booking.arrivalUpdatedAt).toLocaleString()}</span>
@@ -193,23 +243,61 @@ export default function BookingDetailModal({ booking, onClose, onUpdateStatus, o
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 p-6 border-t border-white/5">
-          {booking.status === "pending" && displayStatus !== "ended" && (
-            <>
-              <button onClick={() => onUpdateStatus(booking.id, "approved")} disabled={updatingId === booking.id}
-                className="flex-1 bg-green-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors">
-                {updatingId === booking.id ? "Updating..." : "Approve"}
+        <div className="flex flex-col gap-3 p-6 border-t border-white/5">
+          <div className="flex gap-3">
+            {booking.status === "pending" && displayStatus !== "ended" && (
+              <>
+                <button onClick={() => onUpdateStatus(booking.id, "approved")} disabled={updatingId === booking.id}
+                  className="flex-1 bg-green-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors">
+                  {updatingId === booking.id ? "Updating..." : "Approve"}
+                </button>
+                <button onClick={() => onUpdateStatus(booking.id, "rejected")} disabled={updatingId === booking.id}
+                  className="flex-1 bg-red-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-red-700 disabled:opacity-50 transition-colors">
+                  {updatingId === booking.id ? "Updating..." : "Reject"}
+                </button>
+              </>
+            )}
+            {booking.status === "approved" && displayStatus !== "ended" && (
+              <button
+                onClick={() => setShowReschedule(!showReschedule)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-gold/40 text-gold hover:bg-gold/10 transition-colors"
+              >
+                {showReschedule ? "Cancel Reschedule" : "Reschedule"}
               </button>
-              <button onClick={() => onUpdateStatus(booking.id, "rejected")} disabled={updatingId === booking.id}
-                className="flex-1 bg-red-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-red-700 disabled:opacity-50 transition-colors">
-                {updatingId === booking.id ? "Updating..." : "Reject"}
+            )}
+            <button onClick={() => onDelete(booking.id)} disabled={updatingId === booking.id}
+              className="px-4 py-2.5 rounded-xl text-sm font-medium border border-red-500/30 text-red-400 hover:bg-red-500/10 disabled:opacity-50 transition-colors">
+              Delete
+            </button>
+          </div>
+
+          {/* Reschedule Form */}
+          {showReschedule && (
+            <div className="flex flex-col gap-3 pt-3 border-t border-white/5">
+              <p className="text-sm text-[var(--text-muted)]">Reschedule Booking</p>
+              <div className="flex gap-3">
+                <input
+                  type="date"
+                  value={newDate}
+                  onChange={(e) => setNewDate(e.target.value)}
+                  className="input-dark flex-1 text-sm"
+                />
+                <input
+                  type="time"
+                  value={newTime}
+                  onChange={(e) => setNewTime(e.target.value)}
+                  className="input-dark flex-1 text-sm"
+                />
+              </div>
+              <button
+                onClick={handleReschedule}
+                disabled={rescheduling || !newDate || !newTime}
+                className="btn-gold w-full py-2.5 rounded-xl text-sm font-medium disabled:opacity-50 transition-colors"
+              >
+                {rescheduling ? "Rescheduling..." : "Confirm Reschedule"}
               </button>
-            </>
+            </div>
           )}
-          <button onClick={() => onDelete(booking.id)} disabled={updatingId === booking.id}
-            className="px-4 py-2.5 rounded-xl text-sm font-medium border border-red-500/30 text-red-400 hover:bg-red-500/10 disabled:opacity-50 transition-colors">
-            Delete
-          </button>
         </div>
       </div>
     </div>

@@ -20,6 +20,9 @@ export default function NavBar() {
             <a href="/booking/lookup" className="text-[var(--text-muted)] hover:text-gold transition-colors">
               {t("nav_trackBooking")}
             </a>
+            <a href="/booking/history" className="text-[var(--text-muted)] hover:text-gold transition-colors">
+              My Bookings
+            </a>
             <a href="/admin" className="text-[var(--text-muted)] hover:text-gold transition-colors">
               {t("nav_admin")}
             </a>

@@ -61,7 +61,7 @@ export async function sendSMS(to: string, message: string) {
 /** Send WhatsApp notification for booking events */
 export async function sendBookingWhatsApp(
   phone: string,
-  type: "new" | "approved" | "rejected",
+  type: "new" | "approved" | "rejected" | "rescheduled",
   data: { name: string; referenceNumber: string; date: string; time: string }
 ) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -71,6 +71,7 @@ export async function sendBookingWhatsApp(
     new: `🏢 *Rihan Heights B701*\n\nHi ${data.name}, your booking request has been received!\n\n📋 Ref: ${data.referenceNumber}\n📅 ${data.date} at ${data.time}\n\nWe'll notify you once it's reviewed.\n🔗 Track: ${trackUrl}`,
     approved: `🏢 *Rihan Heights B701*\n\n✅ Great news, ${data.name}! Your booking has been *approved*!\n\n📋 Ref: ${data.referenceNumber}\n📅 ${data.date} at ${data.time}\n\n🔗 Track & share your arrival: ${trackUrl}`,
     rejected: `🏢 *Rihan Heights B701*\n\n❌ Hi ${data.name}, unfortunately your booking (${data.referenceNumber}) for ${data.date} could not be accommodated.\n\nFeel free to book another date.\n🔗 ${appUrl}`,
+    rescheduled: `🏢 *Rihan Heights B701*\n\n📅 Hi ${data.name}, your booking (${data.referenceNumber}) has been *rescheduled*.\n\nNew date: *${data.date} at ${data.time}*\n\n🔗 Track: ${trackUrl}`,
   };
 
   return sendWhatsApp(phone, messages[type]);
