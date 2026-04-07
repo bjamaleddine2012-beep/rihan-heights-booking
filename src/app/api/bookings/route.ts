@@ -8,7 +8,7 @@ import { sendBookingWhatsApp, sendAdminWhatsApp } from "@/lib/twilio";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, phone, nationality, date, time, guests, message, service } = body;
+    const { name, email, phone, nationality, date, time, guests, message, service, duration } = body;
 
     if (!name || !email || !phone || !date || !time) {
       return NextResponse.json(
@@ -44,6 +44,7 @@ export async function POST(request: NextRequest) {
       guests: Number(guests) || 1,
       message: message || "",
       service: service || "other",
+      duration: duration || "",
       status: "pending",
       createdAt: new Date().toISOString(),
     };

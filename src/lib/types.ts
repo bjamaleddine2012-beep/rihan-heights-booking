@@ -10,6 +10,7 @@ export interface Booking {
   guests: number;
   message: string;
   service: string;
+  duration?: string;
   status: "pending" | "approved" | "rejected";
   arrivalStatus?: "none" | "on-the-way" | "arrived";
   arrivalUpdatedAt?: string;

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "./LanguageProvider";
-import { SERVICES, getServiceName } from "@/lib/services";
+import { SERVICES, getServiceName, getServiceById } from "@/lib/services";
 
 // ---------------------------------------------------------------------------
 // Nationalities list
@@ -83,6 +83,7 @@ export default function BookingForm() {
     guests: "1",
     message: "",
   });
+  const [duration, setDuration] = useState("");
   const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -146,6 +147,10 @@ export default function BookingForm() {
     if (currentStep === 2) {
       if (!form.date) newErrors.date = t("val_dateRequired") || "Date is required";
       if (!form.time) newErrors.time = t("val_timeRequired") || "Time is required";
+      const selectedService = getServiceById(service);
+      if (selectedService?.allowDurationPick && !duration) {
+        newErrors.duration = "Please select a duration";
+      }
     }
 
     if (currentStep === 3) {
@@ -212,7 +217,7 @@ export default function BookingForm() {
       const res = await fetch("/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, service }),
+        body: JSON.stringify({ ...form, service, ...(duration ? { duration } : {}) }),
       });
 
       if (!res.ok) {
@@ -428,6 +433,39 @@ export default function BookingForm() {
               </div>
             )}
           </div>
+
+          {/* Duration picker — only for services that allow it */}
+          {(() => {
+            const svc = getServiceById(service);
+            if (!svc?.allowDurationPick) return null;
+            const durations = ["1 hour", "2 hours", "3 hours", "4 hours", "5 hours", "6 hours"];
+            return (
+              <div className="mt-6">
+                <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">
+                  Visit Duration *
+                </label>
+                {errors.duration && (
+                  <p className="text-red-400 text-xs mb-2">{errors.duration}</p>
+                )}
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                  {durations.map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => { setDuration(d); setErrors((prev) => { const n = { ...prev }; delete n.duration; return n; }); }}
+                      className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                        duration === d
+                          ? "bg-[var(--gold)] text-[#0f172a] font-bold"
+                          : "border border-white/10 hover:border-[var(--gold)]/50 text-[var(--text-muted)]"
+                      }`}
+                    >
+                      {d}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
 
@@ -595,6 +633,7 @@ export default function BookingForm() {
                 </p>
                 <p className="font-semibold text-sm">
                   {form.date} &middot; {form.time ? formatTime(form.time) : ""}
+                  {duration && <> &middot; {duration}</>}
                 </p>
               </div>
               <button

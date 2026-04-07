@@ -6,6 +6,7 @@ export interface ServiceConfig {
   descriptionAr: string;
   icon: string;
   estimatedDuration: string;
+  allowDurationPick?: boolean;
 }
 
 export const SERVICES: ServiceConfig[] = [
@@ -16,7 +17,8 @@ export const SERVICES: ServiceConfig[] = [
     descriptionEn: "Schedule a visit to the apartment",
     descriptionAr: "جدولة زيارة للشقة",
     icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a2 2 0 01-2-2v-4a2 2 0 012-2h4a2 2 0 012 2v4a2 2 0 01-2 2h-4",
-    estimatedDuration: "30 min",
+    estimatedDuration: "1-6 hours",
+    allowDurationPick: true,
   },
   {
     id: "maintenance",
